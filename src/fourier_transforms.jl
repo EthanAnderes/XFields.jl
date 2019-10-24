@@ -26,17 +26,23 @@ end
 
 plan(::Type{F}) where F<:FourierTransform = _planFFT(F).FFT
 
-@generated function _planFFT(::Type{F}) where F<:rFourierTransform{nᵢ,pᵢ,d} where {nᵢ,pᵢ,d}
+cplan(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} = fft_mult(F) * _planFFT(cFourierTransform{nᵢ,pᵢ,d}).FFT
+
+rplan(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} = fft_mult(F) * _planFFT(rFourierTransform{nᵢ,pᵢ,d}).FFT
+
+@generated function _planFFT(::Type{F}) where {nᵢ, pᵢ, d, F<:rFourierTransform{nᵢ,pᵢ,d}}
     FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d}(undef, nᵢ...); flags=FFTW.ESTIMATE)
     _FFTplan{typeof(FFT)}(FFT)
 end
-@generated function _planFFT(::Type{F}) where F<:cFourierTransform{nᵢ,pᵢ,d} where {nᵢ,pᵢ,d}
+
+@generated function _planFFT(::Type{F}) where {nᵢ, pᵢ, d, F<:cFourierTransform{nᵢ,pᵢ,d}}
     FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d}(undef, nᵢ...); flags=FFTW.ESTIMATE)
     _FFTplan{typeof(FFT)}(FFT)
 end
 
 # fallback default
 fft_mult(::Type{F}) where F<:FourierTransform = 1
+
 
 
 ## ==================================
@@ -75,7 +81,7 @@ function frequencies(::Type{F}, i::Int) where F<:FourierTransform
     kifull
 end
 
-frequencies(::Type{F}) where F<:FourierTransform{nᵢ,pᵢ,d} where {nᵢ,pᵢ,d} = map(i->frequencies(F,i), tuple(1:d...))::NTuple{d,Array{Float64,d}}
+frequencies(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} = map(i->frequencies(F,i), tuple(1:d...))::NTuple{d,Array{Float64,d}}
 
 function pixels(::Type{F}, i::Int) where F<:FourierTransform
     g = Grid(F)
@@ -86,7 +92,7 @@ function pixels(::Type{F}, i::Int) where F<:FourierTransform
     xifull
 end
 
-pixels(::Type{F}) where F<:FourierTransform{nᵢ,pᵢ,d} where {nᵢ,pᵢ,d} = map(i->pixels(F,i), tuple(1:d...))::NTuple{d,Array{Float64,d}}
+pixels(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} = map(i->pixels(F,i), tuple(1:d...))::NTuple{d,Array{Float64,d}}
 
 
 ## ==================================
@@ -125,4 +131,9 @@ function _fft_output_index_2_freq(ind, nside, period)
     # return ifelse(kpre < nyq, kpre, kpre - 2nyq)  # option 2
 end
 
+function adjoint(F::FFTW.ScaledPlan)
+    iF = inv(F)
+    return (F.scale / iF.scale) * iF
+end
 
+transpose(F::FFTW.ScaledPlan) = F

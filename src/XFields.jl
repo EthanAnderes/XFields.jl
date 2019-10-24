@@ -2,14 +2,15 @@ module XFields
 
 using  FFTW
 using  LinearAlgebra
-import LinearAlgebra: dot
+import LinearAlgebra: dot, adjoint, transpose
 import Base: +, -, *, ^, \, getindex, promote_rule, convert, show, inv
 
 const module_dir  = joinpath(@__DIR__, "..") |> normpath
 
 include("fourier_transforms.jl")
 export rFourierTransform, cFourierTransform, FourierTransform, Transform
-export plan, Grid, wavenumber, frequencies, pixels
+export plan, cplan, rplan
+export Grid, wavenumber, frequencies, pixels
 
 include("rFFT.jl")
 export rFFT, rFFTunitary

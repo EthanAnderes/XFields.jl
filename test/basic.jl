@@ -9,6 +9,7 @@ UFT = rFFTunitary{nᵢ,pᵢ,length(nᵢ)}
 FT_plan = plan(FT)
 UFT_plan = plan(UFT)
 
+
 grid   = Grid(FT)
 λ      = wavenumber(FT)
 kfulli = frequencies(FT) 
@@ -97,19 +98,41 @@ gridu3 = Grid(FFTu3)
 
 pᵢ  = (1.0, 0.5) # periods
 nᵢ   = (256, 256) # number of samples (left endpoint included)
-FFT  = cFFT{nᵢ,pᵢ,length(nᵢ)}
-UFT  = cFFTunitary{nᵢ,pᵢ,length(nᵢ)}
-grid = Grid(FFT)
+cFT  = cFFT{nᵢ,pᵢ,length(nᵢ)}
+cUFT  = cFFTunitary{nᵢ,pᵢ,length(nᵢ)}
+rFT  = rFFT{nᵢ,pᵢ,length(nᵢ)}
+rUFT  = rFFTunitary{nᵢ,pᵢ,length(nᵢ)}
 
-@inferred Grid(FFT)
-@inferred wavenumber(FFT)
-@inferred frequencies(FFT) 
-@inferred pixels(FFT) 
+grid = Grid(cFT)
 
-fk = FFT * rand(Complex{Float64}, grid.nxi...)
-fx = FFT \ rand(Complex{Float64}, grid.nki...)
+@inferred Grid(cFT)
+@inferred wavenumber(cFT)
+@inferred frequencies(cFT) 
+@inferred pixels(cFT) 
+
+cfx = rand(Complex{Float64}, grid.nxi...)
+rfx = rand(Float64, grid.nxi...)
+
 
 @test grid.nxi == grid.nki
+
+@test sum(abs2, plan(cFT)  * cfx .- cplan(rFT)  * cfx) ≈ 0.0 
+@test sum(abs2, plan(cUFT) * cfx .- cplan(rUFT) * cfx) ≈ 0.0 
+
+@test sum(abs2, plan(cFT)  * cfx .- cplan(cFT)  * cfx) ≈ 0.0 
+@test sum(abs2, plan(cUFT) * cfx .- cplan(cUFT) * cfx) ≈ 0.0 
+
+@test sum(abs2, plan(rFT)  * rfx .- rplan(rFT)  * rfx) ≈ 0.0 
+@test sum(abs2, plan(rUFT) * rfx .- rplan(rUFT) * rfx) ≈ 0.0 
+
+@test sum(abs2, plan(rFT)  * rfx .- rplan(cFT)  * rfx) ≈ 0.0 
+@test sum(abs2, plan(rUFT) * rfx .- rplan(cUFT) * rfx) ≈ 0.0 
+
+@inferred adjoint(plan(cFT))
+@inferred transpose(plan(cFT))
+@inferred inv(plan(cFT))
+
+
 
 ## =========================================
 
