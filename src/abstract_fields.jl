@@ -50,10 +50,10 @@ inv(op::DiagOp{F}) where F<:XField = DiagOp(F((squash.(inv.(i)) for i in fieldda
 (*)(O1::DiagOp, O2::DiagOp)                   = tuple(O1, O2)
 (*)(O1::NTuple{N,DiagOp}, O2::DiagOp) where N = tuple(O1..., O2)
 (*)(O1::DiagOp, O2::NTuple{N,DiagOp}) where N = tuple(O1, O2...)
-(*)(O1::NTuple{N,DiagOp}, f::XField) where N   = foldr(*, (O1..., f))::typeof(O1[1].f)
+(*)(O1::NTuple{N,DiagOp}, f::XField)  where N = foldr(*, (O1..., f))::typeof(O1[1].f)
 (\)(O1::DiagOp, O2::DiagOp)                   = tuple(inv(O1), O2)
 (\)(O1::NTuple{N,DiagOp}, O2::DiagOp) where N = tuple(inv(O1)..., O2)
 (\)(O1::DiagOp, O2::NTuple{N,DiagOp}) where N = tuple(inv(O1), O2...)
-(\)(O1::NTuple{N,DiagOp}, f::XField) where N   = (inv(O1) * f)::typeof(O1[end].f)
+(\)(O1::NTuple{N,DiagOp}, f::XField) where N  = (inv(O1) * f)::typeof(O1[end].f)
 inv(O1::NTuple{N,DiagOp}) where N             = tuple((inv(op) for op in reverse(O1))...)
 
