@@ -38,3 +38,46 @@ fft_mult(::Type{F}) where F<:rFFTunitary{nᵢ,pᵢ,d} where {nᵢ,pᵢ,d} = prod
     Grid{nᵢ,pᵢ,d}(Δxi, Δki, xi, ki, nyqi, Ωx, Ωk, nki, nxi, pᵢ, d)
 end
  
+
+
+## ==============================================
+"""
+`get_rFFTimpulses(::Type{rFFT}) -> (rFFTimpulses, CI, LI, get_dual_ci)`
+so that `rFFTimpulses(CI[i,j]) -> (φ,iφ)` which give impulse responses that can be 
+applied on the left of a cov operator `E(Z*Zᴴ)` to yeild it's column. 
+"""
+function get_rFFTimpulses(::Type{rFT}) where {nᵢ,pᵢ,dim,rFT<:rFourierTransform{nᵢ,pᵢ,dim}} 
+    rg = Grid(rFT)
+    CI = CartesianIndices(Base.OneTo.(rg.nki))
+    LI = LinearIndices(Base.OneTo.(rg.nki))
+
+    function _get_dual_k(k,n) 
+        dk = n-k+2
+        mod1(dk,n)
+    end 
+
+    function get_dual_ci(ci::CartesianIndex{dim}) 
+        return CartesianIndex(map(_get_dual_k, ci.I, rg.nxi))
+    end 
+
+    function rFFTimpulses(ci::CartesianIndex{dim})
+        rimpls = zeros(Complex{Float64}, rg.nki...)
+        cimpls = zeros(Complex{Float64}, rg.nki...)
+        dual_ci = get_dual_ci(ci)
+        if (ci==first(CI)) || (ci==dual_ci)
+            rimpls[ci]  = 1
+        elseif dual_ci ∈ CI
+            rimpls[ci]  = 1/2
+            cimpls[ci]  = im/2
+            rimpls[dual_ci]  =  1/2
+            cimpls[dual_ci]  = -im/2
+        else
+            rimpls[ci]  = 1/2
+            cimpls[ci]  = im/2
+        end
+        return rimpls, cimpls
+    end
+
+    return rFFTimpulses, CI, LI, get_dual_ci
+end
+

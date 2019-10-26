@@ -13,7 +13,7 @@ export plan, cplan, rplan
 export Grid, wavenumber, frequencies, pixels
 
 include("rFFT.jl")
-export rFFT, rFFTunitary
+export rFFT, rFFTunitary, get_rFFTimpulses
 
 include("cFFT.jl")
 export cFFT, cFFTunitary
