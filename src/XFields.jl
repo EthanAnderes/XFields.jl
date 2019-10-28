@@ -3,7 +3,7 @@ module XFields
 using  FFTW
 using  LinearAlgebra
 import LinearAlgebra: dot, adjoint, transpose
-import Base: +, -, *, ^, \, getindex, promote_rule, convert, show, inv
+import Base: +, -, *, ^, \, sqrt, getindex, promote_rule, convert, show, inv
 
 const module_dir  = joinpath(@__DIR__, "..") |> normpath
 

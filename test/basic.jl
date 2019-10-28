@@ -33,6 +33,7 @@ L * f2
 
 L1 = DiagOp(f1)
 L2 = DiagOp(f2)
+L3 = sqrt(L2)
 
 L1 * f2
 L2 * L1 * f2

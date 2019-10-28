@@ -38,11 +38,17 @@ end
 (*)(O::DiagOp{F}, f::XField) where F<:XField = O.f * F(f)
 (\)(O::DiagOp{F}, f::XField) where F<:XField = inv(O) * f
 
-# DiagOp^a
+(+)(O1::DiagOp{F}, O2::DiagOp{F}) where F<:XField = DiagOp(O1.f + O2.f)
+(-)(O1::DiagOp{F}, O2::DiagOp{F}) where F<:XField = DiagOp(O1.f - O2.f)
+(-)(O::DiagOp{F}) where F<:XField = DiagOp(-O.f)
+
+(*)(O::DiagOp{F}, a::Number)  where F<:XField = DiagOp(a * O.f)
+(*)(a::Number, O::DiagOp{F})  where F<:XField = DiagOp(a * O.f)
+
 (^)(op::DiagOp{F}, a::Number)  where F<:XField = DiagOp(F((i.^a for i in fielddata(op.f))...))
 (^)(op::DiagOp{F}, a::Integer) where F<:XField = DiagOp(F((i.^a for i in fielddata(op.f))...))
+sqrt(op::DiagOp{F}) where F<:XField            = DiagOp(F((sqrt.(i) for i in fielddata(op.f))...))
 
-# DiagOp^a
 inv(op::DiagOp{F}) where F<:XField = DiagOp(F((squash.(inv.(i)) for i in fielddata(op.f))... ))
 @inline squash(x::T) where T = ifelse(isfinite(x), x, T(0))
 
@@ -50,10 +56,12 @@ inv(op::DiagOp{F}) where F<:XField = DiagOp(F((squash.(inv.(i)) for i in fieldda
 (*)(O1::DiagOp, O2::DiagOp)                   = tuple(O1, O2)
 (*)(O1::NTuple{N,DiagOp}, O2::DiagOp) where N = tuple(O1..., O2)
 (*)(O1::DiagOp, O2::NTuple{N,DiagOp}) where N = tuple(O1, O2...)
+(*)(O1::NTuple{N,DiagOp}, O2::NTuple{M,DiagOp}) where {N,M} = tuple(O1..., O2...)
 (*)(O1::NTuple{N,DiagOp}, f::XField)  where N = foldr(*, (O1..., f))::typeof(O1[1].f)
 (\)(O1::DiagOp, O2::DiagOp)                   = tuple(inv(O1), O2)
 (\)(O1::NTuple{N,DiagOp}, O2::DiagOp) where N = tuple(inv(O1)..., O2)
 (\)(O1::DiagOp, O2::NTuple{N,DiagOp}) where N = tuple(inv(O1), O2...)
 (\)(O1::NTuple{N,DiagOp}, f::XField) where N  = (inv(O1) * f)::typeof(O1[end].f)
 inv(O1::NTuple{N,DiagOp}) where N             = tuple((inv(op) for op in reverse(O1))...)
+(\)(O1::NTuple{N,DiagOp}, O2::NTuple{M,DiagOp}) where {N,M} = tuple(inv(O1)..., O2...)
 

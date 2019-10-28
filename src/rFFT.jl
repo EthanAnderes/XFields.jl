@@ -44,7 +44,7 @@ end
 """
 `get_rFFTimpulses(::Type{rFFT}) -> (rFFTimpulses, CI, LI, get_dual_ci)`
 so that `rFFTimpulses(CI[i,j]) -> (φ,iφ)` which give impulse responses that can be 
-applied on the left of a cov operator `E(Z*Zᴴ)` to yeild it's column. 
+applied on the left of a cov operator `E(Z*Zᴴ)` to yield it's column. 
 """
 function get_rFFTimpulses(::Type{rFT}) where {nᵢ,pᵢ,dim,rFT<:rFourierTransform{nᵢ,pᵢ,dim}} 
     rg = Grid(rFT)
