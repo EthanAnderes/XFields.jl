@@ -2,20 +2,20 @@ using LinearAlgebra
 
 let
 	rFTvals = [
-		rFFT{(7,7),(1.0,2.0),2},
-		rFFT{(7,8),(1.0,2.0),2},
-		rFFT{(8,7),(1.0,2.0),2},
-		rFFT{(8,8),(1.0,2.0),2},
-		rFFT{(128,),(2.0,),1},  
-		rFFT{(127,),(2.0,),1},  
+		rFFT(nᵢ=(7,7),pᵢ=(1.0,2.0)),
+		rFFT(nᵢ=(7,8),pᵢ=(1.0,2.0)),
+		rFFT(nᵢ=(8,7),pᵢ=(1.0,2.0)),
+		rFFT(nᵢ=(8,8),pᵢ=(1.0,2.0)),
+		rFFT(nᵢ=(128,),pᵢ=(2.0,)),  
+		rFFT(nᵢ=(127,),pᵢ=(2.0,)),  
 	]
 	cFTvals = [
-		cFFT{(7,7),(1.0,2.0),2},
-		cFFT{(7,8),(1.0,2.0),2},
-		cFFT{(8,7),(1.0,2.0),2},
-		cFFT{(8,8),(1.0,2.0),2},
-		cFFT{(128,),(2.0,),1},  
-		cFFT{(127,),(2.0,),1},  
+		cFFT(nᵢ=(7,7),pᵢ=(1.0,2.0)),
+		cFFT(nᵢ=(7,8),pᵢ=(1.0,2.0)),
+		cFFT(nᵢ=(8,7),pᵢ=(1.0,2.0)),
+		cFFT(nᵢ=(8,8),pᵢ=(1.0,2.0)),
+		cFFT(nᵢ=(128,),pᵢ=(2.0,)),  
+		cFFT(nᵢ=(127,),pᵢ=(2.0,)),  
 	]
 
 	for (rFT,cFT) ∈ zip(rFTvals, cFTvals)
@@ -106,7 +106,7 @@ let
 		rC2test2 = complex.(Σ2XX .- Σ2YY, Σ2YX .+ Σ2XY)
 
 		for (A,B) ∈ zip((rΓ1test2, rC1test2, rΓ2test2, rC2test2), (rΓ1, rC1, rΓ2, rC2))
-	    	@test sum(abs2, A.- B) <= eps(Float64)
+	    	@test sum(abs2, A.- B) ≈ 0.0 atol=1e-15
 		end
 	end # for
 end # let 
