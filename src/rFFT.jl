@@ -1,5 +1,5 @@
-
-## ============== rFFT and rFFTunitary ====================
+## =====================================================
+# rFFT and rFFTunitary
 struct rFFT{nᵢ,pᵢ,d}        <: rFourierTransform{nᵢ,pᵢ,d}  end
 struct rFFTunitary{nᵢ,pᵢ,d} <: rFourierTransform{nᵢ,pᵢ,d}  end
 
@@ -39,8 +39,8 @@ fft_mult(::Type{F}) where F<:rFFTunitary{nᵢ,pᵢ,d} where {nᵢ,pᵢ,d} = prod
 end
  
 
-
 ## ==============================================
+# Used for constructing the covariance matrix of a subset of frequencies
 """
 `get_rFFTimpulses(::Type{rFFT}) -> (rFFTimpulses, CI, LI, get_dual_ci)`
 so that `rFFTimpulses(CI[i,j]) -> (φ,iφ)` which give impulse responses that can be 

@@ -1,4 +1,5 @@
-## ============== Smap{FT} and Sfourier{FT} where FT<:FourierTransform ====================
+## =====================================================
+# Smap{FT} and Sfourier{FT} where FT<:FourierTransform 
 
 F64   = Float64
 CF64  = Complex{Float64}

@@ -1,51 +1,51 @@
-## ==================================
+## =====================================================
 abstract type Transform end
 
-## ==================================
+## =====================================================
 # nᵢ ≡ number of grid evaluations to a side
 # pᵢ ≡ period (e.g. grid evals at {0, pᵢ/nᵢ, pᵢ2/nᵢ, …, pᵢ(nᵢ-1)/nᵢ})
 
-abstract type FourierTransform{nᵢ,pᵢ,d} <: Transform end
+abstract type FourierTransform{nᵢ,pᵢ,d}  <: Transform end
 abstract type rFourierTransform{nᵢ,pᵢ,d} <: FourierTransform{nᵢ,pᵢ,d} end
 abstract type cFourierTransform{nᵢ,pᵢ,d} <: FourierTransform{nᵢ,pᵢ,d} end
 
-## ==================================
+## =====================================================
 # generic multiply
 (*)(::Type{FT}, x::Array) where FT<:FourierTransform = plan(FT) * x
 (\)(::Type{FT}, x::Array) where FT<:FourierTransform = plan(FT) \ x
 
 
-## ==================================
-# container for FFT plan of of rFourierTransform{nᵢ,pᵢ,d} ... generated constructor: _planFFT
-# Note: it seems the reason I need a wrapper is to take advantage of generated funs. 
-# There is probably a better way
+## =====================================================
+#  Generated functions for the plans
 
-struct _FFTplan{F} 
-    FFT::F 
-end
-
-plan(::Type{F}) where F<:FourierTransform = _planFFT(F).FFT
-
-cplan(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} = fft_mult(F) * _planFFT(cFourierTransform{nᵢ,pᵢ,d}).FFT
-
-rplan(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} = fft_mult(F) * _planFFT(rFourierTransform{nᵢ,pᵢ,d}).FFT
-
-@generated function _planFFT(::Type{F}) where {nᵢ, pᵢ, d, F<:rFourierTransform{nᵢ,pᵢ,d}}
+@generated function plan(::Type{F}) where {nᵢ, pᵢ, d, F<:rFourierTransform{nᵢ,pᵢ,d}}
     FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d}(undef, nᵢ...); flags=FFTW.ESTIMATE)
-    _FFTplan{typeof(FFT)}(FFT)
+    return :( $FFT )
+end
+@generated function plan(::Type{F}) where {nᵢ, pᵢ, d, F<:cFourierTransform{nᵢ,pᵢ,d}}
+    FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d}(undef, nᵢ...); flags=FFTW.ESTIMATE)
+    return :( $FFT )
 end
 
-@generated function _planFFT(::Type{F}) where {nᵢ, pᵢ, d, F<:cFourierTransform{nᵢ,pᵢ,d}}
-    FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d}(undef, nᵢ...); flags=FFTW.ESTIMATE)
-    _FFTplan{typeof(FFT)}(FFT)
+@generated function cplan(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} 
+    FFT  =  fft_mult(F) * plan(cFourierTransform{nᵢ,pᵢ,d})
+    return :( $FFT )
 end
+
+@generated function rplan(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} 
+    FFT  =  fft_mult(F) * plan(rFourierTransform{nᵢ,pᵢ,d})
+    return :( $FFT )
+end
+
 
 # fallback default
 fft_mult(::Type{F}) where F<:FourierTransform = 1
 
 
 
-## ==================================
+
+
+## =====================================================
 # container for grid information of F<:FourierTransform{nᵢ,pᵢ,d}
 
 struct Grid{nᵢ,pᵢ,dim}
@@ -95,7 +95,7 @@ end
 pixels(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} = map(i->pixels(F,i), tuple(1:d...))::NTuple{d,Array{Float64,d}}
 
 
-## ==================================
+## =====================================================
 # misc ...
 
 """

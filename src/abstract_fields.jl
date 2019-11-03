@@ -1,11 +1,13 @@
+## =====================================================
 abstract type XField{T<:Transform} end
 
 @generated fielddata(x::XField) = :(tuple($((:(x.$f) for f=fieldnames(x))...)))
 convert(::Type{X}, f::X) where X<:XField = f::X
 
-## =========== operations with fields ===========
+## =====================================================
+# operations with fields
 
-## fields with scalars
+# fields with scalars
 (+)(f::F, n::Number) where F<:XField = F((ff .+ n for ff in fielddata(f))...)
 (+)(n::Number, f::F) where F<:XField = F((ff .+ n for ff in fielddata(f))...)
 (-)(f::F)            where F<:XField = F((.- ff for ff in fielddata(f))...)
@@ -14,22 +16,23 @@ convert(::Type{X}, f::X) where X<:XField = f::X
 (*)(f::F, n::Number) where F<:XField = F((n .*  ff for ff in fielddata(f))...)
 (*)(n::Number, f::F) where F<:XField = F((n .*  ff for ff in fielddata(f))...)
 
-## fields with UniformScaling
+# fields with UniformScaling
 (*)(f::F, J::UniformScaling) where F<:XField = J.λ * f
 (*)(J::UniformScaling, f::F) where F<:XField = J.λ * f
 
-## op(fields, fields) which broadcast to the underlying fielddata for type similar args
+# op(fields, fields) which broadcast to the underlying fielddata for type similar args
 for op in (:+, :-, :*)
     @eval ($op)(a::F, b::F) where {F<:XField} = F(map((a,b)->broadcast($op,a,b),fielddata(a),fielddata(b))...)
 end
 
-## op(fields, fields) operators for which we do automatic promotion
+# op(fields, fields) operators for which we do automatic promotion
 for op in (:+, :-, :dot)
     @eval ($op)(a::XField, b::XField) = ($op)(promote(a,b)...)
 end
 
 
-## =========== linear operators diagonal in a XField basis===========
+## =====================================================
+# linear operators diagonal in a XField basis
 
 struct DiagOp{F<:XField}
     f::F

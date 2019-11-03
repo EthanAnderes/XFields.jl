@@ -1,5 +1,5 @@
-
-## ============== cFFT and cFFTunitary ====================
+## =====================================================
+# cFFT and cFFTunitary
 struct cFFT{nᵢ,pᵢ,d}        <: cFourierTransform{nᵢ,pᵢ,d}  end
 struct cFFTunitary{nᵢ,pᵢ,d} <: cFourierTransform{nᵢ,pᵢ,d}  end
 
