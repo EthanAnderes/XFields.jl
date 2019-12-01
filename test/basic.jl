@@ -20,9 +20,19 @@ fx = FT \ rand(Complex{Float64}, grid.nki...)
 
 f1 = Smap{FT}(fx)
 f2 = Sfourier{FT}(fk)
-
 f4 = Sfourier{FT}(f1)
 f3 = Smap{FT}(f2)
+
+@test all(f1[!] .== FT_plan * fx)
+@test all(f1[:] .== fx)
+@test all(f2[!] .== fk)
+@test all(f2[:] .== FT_plan \ fk)
+
+
+
+@inferred dot(f3, f1)
+# real(dot(cplan(FT) * f3[:x], cplan(FT) * f1[:x])) / Grid(FT).Ωk
+# real(dot(f3[:x], f1[:x])) / Grid(FT).Ωx
 
 f1 + f2
 - 2 * f2
@@ -34,6 +44,12 @@ L * f2
 L1 = DiagOp(f1)
 L2 = DiagOp(f2)
 L3 = sqrt(L2)
+
+@test all(L1[!] .== FT_plan * fx)
+@test all(L1[:] .== fx)
+@test all(L2[!] .== fk)
+@test all(L2[:] .== FT_plan \ fk)
+
 
 L1 * f2
 L2 * L1 * f2
@@ -137,8 +153,8 @@ rfx = rand(Float64, grid.nxi...)
 
 ## =========================================
 
-pᵢ  = (1.0, 0.5) # periods
-nᵢ   = (256, 256) # number of samples (left endpoint included)
+pᵢ  = (1.0, 3.5) # periods
+nᵢ   = (64,64) # number of samples (left endpoint included)
 FFT  = rFFT{nᵢ,pᵢ,length(nᵢ)}
 UFT  = rFFTunitary{nᵢ,pᵢ,length(nᵢ)}
 grid = Grid(FFT)
@@ -148,8 +164,8 @@ grid = Grid(FFT)
 @inferred frequencies(FFT) 
 @inferred pixels(FFT) 
 
-fk = FFT * rand(nᵢ...)
-fx = FFT \ rand(Complex{Float64}, grid.nki...)
+fk = FFT * randn(nᵢ...)
+fx = FFT \ randn(Complex{Float64}, grid.nki...)
 
 f1 = Smap{FFT}(fx)
 f2 = Sfourier{FFT}(fk)
@@ -163,25 +179,25 @@ map(x -> sin.(cos.(x)), fielddata(f1)) |> x->Smap{FFT}(x...)
 L = DiagOp(f1)
 L * f2
 
-L1 = DiagOp(f1)
-L2 = DiagOp(f2)
+L1 = DiagOp(f1+1)
+L2 = DiagOp(f2+1)
 for f ∈ (f1, f2), L ∈ (L1, L2), M ∈ (L1, L2)
 	@inferred L * f
 	@inferred L * M * f
 	@inferred L * M \ f
 	@inferred L \ M \ f
 	@inferred L \ M * f
-	@test sum(sum(abs2.(t)) for t in fielddata((L * M * f) - (L * (M * f)))) ≈ 0.0
-	@test sum(sum(abs2.(t)) for t in fielddata((L * M \ f) - (inv(M) * (inv(L) * f)))) ≈ 0.0
-	@test sum(sum(abs2.(t)) for t in fielddata((L \ M \ f) - (inv(M) * (inv(inv(L)) * f)))) ≈ 0.0
-	@test sum(sum(abs2.(t)) for t in fielddata((L \ M * f) - (inv(L) * (M * f)))) ≈ 0.0
+	@test mean(mean(abs.(t)) for t in fielddata((L * M * f) - (L * (M * f)))) ≈ 0.0 atol=1e-5
+	@test mean(mean(abs.(t)) for t in fielddata((L * M \ f) - (inv(M) * (inv(L) * f)))) ≈ 0.0 atol=1e-5
+	@test mean(mean(abs.(t)) for t in fielddata((L \ M \ f) - (inv(M) * (inv(inv(L)) * f)))) ≈ 0.0 atol=1e-5
+	@test mean(mean(abs.(t)) for t in fielddata((L \ M * f) - (inv(L) * (M * f)))) ≈ 0.0 atol=1e-5
 end
 
 
 ## =========================================
 
 pᵢ  = (1.0,) 
-nᵢ   = (256,)
+nᵢ   = (64,)
 FFT  = rFFT{nᵢ,pᵢ,length(nᵢ)}
 UFT  = rFFTunitary{nᵢ,pᵢ,length(nᵢ)}
 grid = Grid(FFT)
@@ -207,18 +223,18 @@ map(x -> sin.(cos.(x)), fielddata(f1)) |> x->Smap{FFT}(x...)
 L = DiagOp(f1)
 L * f2
 
-L1 = DiagOp(f1)
-L2 = DiagOp(f2)
+L1 = DiagOp(f1+1)
+L2 = DiagOp(f2+1)
 for f ∈ (f1, f2), L ∈ (L1, L2), M ∈ (L1, L2)
 	@inferred L * f
 	@inferred L * M * f
 	@inferred L * M \ f
 	@inferred L \ M \ f
 	@inferred L \ M * f
-	@test sum(sum(abs2.(t)) for t in fielddata((L * M * f) - (L * (M * f)))) ≈ 0.0
-	@test sum(sum(abs2.(t)) for t in fielddata((L * M \ f) - (inv(M) * (inv(L) * f)))) ≈ 0.0
-	@test sum(sum(abs2.(t)) for t in fielddata((L \ M \ f) - (inv(M) * (inv(inv(L)) * f)))) ≈ 0.0
-	@test sum(sum(abs2.(t)) for t in fielddata((L \ M * f) - (inv(L) * (M * f)))) ≈ 0.0
+	@test mean(mean(abs.(t)) for t in fielddata((L * M * f) - (L * (M * f)))) ≈ 0.0 atol=1e-5
+	@test mean(mean(abs.(t)) for t in fielddata((L * M \ f) - (inv(M) * (inv(L) * f)))) ≈ 0.0 atol=1e-5
+	@test mean(mean(abs.(t)) for t in fielddata((L \ M \ f) - (inv(M) * (inv(inv(L)) * f)))) ≈ 0.0 atol=1e-5
+	@test mean(mean(abs.(t)) for t in fielddata((L \ M * f) - (inv(L) * (M * f)))) ≈ 0.0 atol=1e-5
 end
 
 

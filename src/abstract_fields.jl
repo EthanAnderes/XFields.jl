@@ -3,6 +3,8 @@ abstract type XField{T<:Transform} end
 
 @generated fielddata(x::XField) = :(tuple($((:(x.$f) for f=fieldnames(x))...)))
 convert(::Type{X}, f::X) where X<:XField = f::X
+@inline squash(x::T) where T<:Number = ifelse(isfinite(x), x, T(0))
+
 
 ## =====================================================
 # operations with fields
@@ -26,7 +28,7 @@ for op in (:+, :-, :*)
 end
 
 # op(fields, fields) operators for which we do automatic promotion
-for op in (:+, :-, :dot)
+for op in (:+, :-)
     @eval ($op)(a::XField, b::XField) = ($op)(promote(a,b)...)
 end
 
@@ -38,33 +40,39 @@ struct DiagOp{F<:XField}
     f::F
 end
 
-(*)(O::DiagOp{F}, f::XField) where F<:XField = O.f * F(f)
-(\)(O::DiagOp{F}, f::XField) where F<:XField = inv(O) * f
+# getindex and basic operator functionality
+diag(O::DiagOp)         = O.f
+getindex(O::DiagOp, i)  = getindex(O.f, i) # indexing is propigated
+(*)(O::DiagOp{F}, f::G) where {F<:XField, G<:XField} = G(O.f * F(f))
+(\)(O::DiagOp{F}, f::G) where {F<:XField, G<:XField} = G(inv(O).f * F(f))
 
-(+)(O1::DiagOp{F}, O2::DiagOp{F}) where F<:XField = DiagOp(O1.f + O2.f)
-(-)(O1::DiagOp{F}, O2::DiagOp{F}) where F<:XField = DiagOp(O1.f - O2.f)
-(-)(O::DiagOp{F}) where F<:XField = DiagOp(-O.f)
-
+# scalar ops with DiagOp
 (*)(O::DiagOp{F}, a::Number)  where F<:XField = DiagOp(a * O.f)
 (*)(a::Number, O::DiagOp{F})  where F<:XField = DiagOp(a * O.f)
-
+(-)(O::DiagOp{F}) where F<:XField = DiagOp(-O.f)
 (^)(op::DiagOp{F}, a::Number)  where F<:XField = DiagOp(F((i.^a for i in fielddata(op.f))...))
 (^)(op::DiagOp{F}, a::Integer) where F<:XField = DiagOp(F((i.^a for i in fielddata(op.f))...))
 sqrt(op::DiagOp{F}) where F<:XField            = DiagOp(F((sqrt.(i) for i in fielddata(op.f))...))
-
 inv(op::DiagOp{F}) where F<:XField = DiagOp(F((squash.(inv.(i)) for i in fielddata(op.f))... ))
-@inline squash(x::T) where T = ifelse(isfinite(x), x, T(0))
 
-# chains of linear ops with * and 
-(*)(O1::DiagOp, O2::DiagOp)                   = tuple(O1, O2)
+# ops of the same type
+(+)(O1::DiagOp{F}, O2::DiagOp{F}) where F<:XField = DiagOp(O1.f + O2.f)
+(-)(O1::DiagOp{F}, O2::DiagOp{F}) where F<:XField = DiagOp(O1.f - O2.f)
+(*)(O1::DiagOp{F}, O2::DiagOp{F}) where F<:XField = DiagOp(O1.f * O2.f)
+(\)(O1::DiagOp{F}, O2::DiagOp{F}) where F<:XField = DiagOp(inv(O1).f * O2.f)
+
+# chains of linear ops that are not of the same type store a lazy tuple
+(*)(O1::DiagOp, O2::DiagOp) = tuple(O1, O2)
 (*)(O1::NTuple{N,DiagOp}, O2::DiagOp) where N = tuple(O1..., O2)
 (*)(O1::DiagOp, O2::NTuple{N,DiagOp}) where N = tuple(O1, O2...)
 (*)(O1::NTuple{N,DiagOp}, O2::NTuple{M,DiagOp}) where {N,M} = tuple(O1..., O2...)
-(*)(O1::NTuple{N,DiagOp}, f::XField)  where N = foldr(*, (O1..., f))::typeof(O1[1].f)
+(*)(O1::NTuple{N,DiagOp}, f::G) where {N,G<:XField} = foldr(*, (O1..., f))::G #::typeof(O1[1].f)
+
 (\)(O1::DiagOp, O2::DiagOp)                   = tuple(inv(O1), O2)
 (\)(O1::NTuple{N,DiagOp}, O2::DiagOp) where N = tuple(inv(O1)..., O2)
 (\)(O1::DiagOp, O2::NTuple{N,DiagOp}) where N = tuple(inv(O1), O2...)
-(\)(O1::NTuple{N,DiagOp}, f::XField) where N  = (inv(O1) * f)::typeof(O1[end].f)
-inv(O1::NTuple{N,DiagOp}) where N             = tuple((inv(op) for op in reverse(O1))...)
 (\)(O1::NTuple{N,DiagOp}, O2::NTuple{M,DiagOp}) where {N,M} = tuple(inv(O1)..., O2...)
+(\)(O1::NTuple{N,DiagOp}, f::G) where {N,G<:XField} = (inv(O1) * f)::G  #::typeof(O1[end].f)
+
+inv(O1::NTuple{N,DiagOp}) where N = tuple((inv(op) for op in reverse(O1))...)
 

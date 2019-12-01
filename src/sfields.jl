@@ -35,52 +35,14 @@ Smap{FT,d}(f::Sfield{FT,d}) where {d,FT<:rFT{d}}     = convert(Smap{FT,d}, f)
 Smap{FT}(f::Sfield{FT,d}) where {d,FT<:rFT{d}}       = convert(Smap{FT,d}, f)
 
 #  getindex
+getindex(f::Sfield{FT}, ::typeof(!)) where FT = Sfourier{FT}(f).k
+getindex(f::Sfield{FT}, ::Colon)     where FT = Smap{FT}(f).x
+
 function getindex(f::Sfield{FT}, sym::Symbol) where FT
-    (sym == :k)  ? Sfourier{FT}(f).k :
-    (sym == :x)  ? Smap{FT}(f).x :
+    (sym == :k) ? Sfourier{FT}(f).k :
+    (sym == :x) ? Smap{FT}(f).x :
     error("index is not defined")
 end
 
 
-
-# TODO: 
-# ## dot for Pix <: Flat
-# dot(a::X, b::X) where X<:XField{P} where P<:Flat = _dot(a, b, is_map(X))
-
-# ## dot(map, map)
-# function _dot(a::X, b::X, ::Type{IsMap{true}}) where X<:XField{P} where P<:Flat
-#     FT = harmonic_transform(X)
-#     return sum(map(_realdot, fielddata(a),fielddata(b))) * FT.Ωx
-# end
-
-# # dot(fourier, fourier)
-# function _dot(a::X, b::X, ::Type{IsMap{false}}) where X<:XField{P} where P<:Flat
-#     FT = harmonic_transform(X)
-#     sum(map(_complexdot, fielddata(a),fielddata(b))) * FT.Ωk
-# end
-
-# # these work better for ArrayFire
-# _realdot(a,b) = sum(a.*b)
-
-# function _complexdot(a,b)
-#     n,m = size(a)
-#     @assert size(a)==size(b) && n==m÷2+1
-#     # ----- this kills the repeated frequencies
-#     multip_ri = fill(true, n, m)   # both real and imaginary
-#     multip_ri[1,(n+1):m] .= false  # repeats
-#     if iseven(m)
-#         multip_ri[end,(n+1):m] .= false  # repeats
-#     end
-#     # ----- Now to a direct (x 2) dot product of the real and imag parts
-#     ra, ia = real(a), imag(a)
-#     rb, ib = real(b), imag(b)
-#     rtn  = 2*dot(ra, multip_ri .* rb) + 2*dot(ia, multip_ri .* ib)
-#     # ----- but we don't mult by 2 for the real terms... so we take away 1
-#     rtn -= ra[1,1]*rb[1,1]  
-#     rtn -= ra[1,n]*rb[1,n] 
-#     if iseven(m) 
-#         rtn -= ra[n,1]*rb[n,1] 
-#         rtn -= ra[n,n]*rb[n,n] 
-#     end 
-#     return rtn
-# end
+dot(f::Sfield{FT}, g::Sfield{FT}) where FT = dot(f[:x], g[:x]) * Grid(FT).Ωx
