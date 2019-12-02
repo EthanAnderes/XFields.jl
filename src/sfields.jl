@@ -45,4 +45,4 @@ function getindex(f::Sfield{FT}, sym::Symbol) where FT
 end
 
 
-dot(f::Sfield{FT}, g::Sfield{FT}) where FT = dot(f[:x], g[:x]) * Grid(FT).Ωx
+dot(f::Sfield{FT}, g::Sfield{FT}) where FT = dot(f[:], g[:]) * Grid(FT).Ωx
