@@ -1,8 +1,6 @@
 ## =====================================================
 # Smap{FT} and Sfourier{FT} where FT<:FourierTransform 
 
-F64   = Float64
-CF64  = Complex{Float64}
 rFT{d} = rFourierTransform{nᵢ,pᵢ,d} where {nᵢ,pᵢ} 
 
 struct Smap{FT<:rFourierTransform,d} <: XField{FT}

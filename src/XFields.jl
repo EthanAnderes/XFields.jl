@@ -6,6 +6,10 @@ import LinearAlgebra: dot, adjoint, transpose, diag
 import Base: +, -, *, ^, \, sqrt, getindex, promote_rule, convert, show, inv
 
 const module_dir  = joinpath(@__DIR__, "..") |> normpath
+const F64   = Float64
+const CF64  = Complex{Float64}
+
+export dot, adjoint
 
 include("fourier_transforms.jl")
 export rFourierTransform, cFourierTransform, FourierTransform, Transform
@@ -23,6 +27,6 @@ include("abstract_fields.jl")
 export XField, fielddata, DiagOp, squash, diag
 
 include("sfields.jl")
-export Smap, Sfourier, Sfield, dot
+export Smap, Sfourier, Sfield
 
 end # module

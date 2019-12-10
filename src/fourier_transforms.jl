@@ -10,6 +10,12 @@ abstract type rFourierTransform{nᵢ,pᵢ,d} <: FourierTransform{nᵢ,pᵢ,d} en
 abstract type cFourierTransform{nᵢ,pᵢ,d} <: FourierTransform{nᵢ,pᵢ,d} end
 
 ## =====================================================
+#  This allows broadcasting an fft plan to slices indexed by trailing dimensions
+#  note: t isa Int or a tuple of ints
+abstract type SliceDim{t} end
+
+
+## =====================================================
 # generic multiply
 (*)(::Type{FT}, x::Array) where FT<:FourierTransform = plan(FT) * x
 (\)(::Type{FT}, x::Array) where FT<:FourierTransform = plan(FT) \ x
@@ -22,6 +28,7 @@ abstract type cFourierTransform{nᵢ,pᵢ,d} <: FourierTransform{nᵢ,pᵢ,d} en
     FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d}(undef, nᵢ...); flags=FFTW.ESTIMATE)
     return :( $FFT )
 end
+
 @generated function plan(::Type{F}) where {nᵢ, pᵢ, d, F<:cFourierTransform{nᵢ,pᵢ,d}}
     FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d}(undef, nᵢ...); flags=FFTW.ESTIMATE)
     return :( $FFT )
@@ -36,6 +43,28 @@ end
     FFT  =  fft_mult(F) * plan(rFourierTransform{nᵢ,pᵢ,d})
     return :( $FFT )
 end
+
+
+@generated function plan(::Type{F}, ::Type{SliceDim{t}}) where {t, nᵢ, pᵢ, d, F<:rFourierTransform{nᵢ,pᵢ,d}}
+    FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d+length(t)}(undef, nᵢ... ,t...), 1:d; flags=FFTW.ESTIMATE)
+    return :( $FFT )
+end
+
+@generated function plan(::Type{F}, ::Type{SliceDim{t}}) where {t, nᵢ, pᵢ, d, F<:cFourierTransform{nᵢ,pᵢ,d}}
+    FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d+length(t)}(undef, nᵢ..., t...), 1:d; flags=FFTW.ESTIMATE)
+    return :( $FFT )
+end
+
+@generated function cplan(::Type{F}, ::Type{SliceDim{t}}) where {t, nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} 
+    FFT  =  fft_mult(F) * plan(cFourierTransform{nᵢ,pᵢ,d}, SliceDim{t})
+    return :( $FFT )
+end
+
+@generated function rplan(::Type{F}, ::Type{SliceDim{t}}) where {t, nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} 
+    FFT  =  fft_mult(F) * plan(rFourierTransform{nᵢ,pᵢ,d}, SliceDim{t})
+    return :( $FFT )
+end
+
 
 
 # fallback default
