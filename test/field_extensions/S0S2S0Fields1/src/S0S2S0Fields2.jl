@@ -1,9 +1,9 @@
 
 #%% An extension of XFields to S0,S2 spin fields in Rᵈ where d=2
-#%% which defines the fields as separate in the type
+#%% which defines the fields as slices of an Array{Float64,3}
 #%% ==============================================================
 
-module S02Fields1
+module S02Fields2
 
 using XFields
 import LinearAlgebra: dot
@@ -23,9 +23,7 @@ const CF64  = Complex{Float64}
 rFT2  = rFourierTransform{nᵢ,pᵢ,2} where {nᵢ,pᵢ} 
 
 struct S02map{FT<:rFourierTransform} <: XField{FT}
-    I::Array{F64,2}
-    Q::Array{F64,2}
-    U::Array{F64,2}
+    IQU::Array{F64,2}
     S02map{FT}(x) where {FT<:rFT2} = new{FT}(copy(x),copy(x),copy(x))
     S02map{FT}(x::Array{F64,3}) where {FT<:rFT2} = new{FT}(x[:,:,1],x[:,:,2],x[:,:,3])
     S02map{FT}(x1::T, x2::T, x3::T) where {T<:Array{F64,2},FT<:rFT2} = new{FT}(x1,x2,x3)
@@ -42,9 +40,7 @@ struct S02map{FT<:rFourierTransform} <: XField{FT}
 end
 
 struct S02fourier{FT<:rFourierTransform} <: XField{FT}
-    I::Array{CF64,2}
-    E::Array{CF64,2}
-    B::Array{CF64,2}
+    IEB::Array{CF64,2}
     S02fourier{FT}(k) where {FT<:rFT2} = new{FT}(copy(k),copy(k),copy(k))
     S02fourier{FT}(k::Array{CF64,3}) where {FT<:rFT2} = new{FT}(k[:,:,1],k[:,:,2],k[:,:,3])
     S02fourier{FT}(k1::T, k2::T, k3::T) where {T<:Array{CF64,2},FT<:rFT2} = new{FT}(k1, k2, k3)
