@@ -3,8 +3,11 @@ using Test
 
 mean(x) = sum(x) / length(x)
 
-@testset "XFields.jl" begin
+@testset "basic" begin
     include("basic.jl")
-    include("test_get_rFFTimpulses.jl")
 end
 
+@testset "rFFTimpulses" begin
+    include("rFFTimpulses/test_get_rFFTimpulses_1.jl")
+    include("rFFTimpulses/test_get_rFFTimpulses_2.jl")
+end
