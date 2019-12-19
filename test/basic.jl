@@ -1,4 +1,51 @@
 
+#%% SField Constructors
+#%% ------------------------------------------
+
+let FT = rFFT(nᵢ=(256, 50), pᵢ=(1.0, 0.5))
+
+	@inferred Smap{FT}()
+	@inferred Smap{FT}(0)
+	@inferred Sfourier{FT}()
+	@inferred Sfourier{FT}(0)
+
+	matx = rand(Bool, Grid(FT).nxi...)
+	matk = rand(Bool, Grid(FT).nki...)
+
+	@inferred Smap{FT}(matx)
+	@inferred Sfourier{FT}(matk)
+
+end
+
+
+
+#%% Test using FT for converting between Smap and Sfourier
+#%% ------------------------------------------
+
+let FT = rFFT(nᵢ=(256, 50), pᵢ=(1.0, 0.5))
+	
+	matx = rand(Float64, Grid(FT).nxi...)
+	matk = FT*rand(Float64, Grid(FT).nxi...)
+	fx = matx |> Smap{FT}
+	fk = matk |> Sfourier{FT}
+
+	@inferred FT * fx
+	@inferred FT * fk
+	@inferred FT \ fx
+	@inferred FT * fk
+
+	@test all((FT * fx).k .== (FT * matx))
+	@test all((FT \ fx).x .== matx)
+
+	@test all((FT * fk).k .== matk)
+	@test all((FT \ fk).x .== (FT \ matk))
+
+
+end
+
+
+
+
 
 ##======================================================
 pᵢ  = (1.0, 0.5) # periods
