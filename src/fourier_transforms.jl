@@ -9,16 +9,14 @@ abstract type FourierTransform{nᵢ,pᵢ,d}  <: Transform end
 abstract type rFourierTransform{nᵢ,pᵢ,d} <: FourierTransform{nᵢ,pᵢ,d} end
 abstract type cFourierTransform{nᵢ,pᵢ,d} <: FourierTransform{nᵢ,pᵢ,d} end
 
+rFT{d} = rFourierTransform{nᵢ,pᵢ,d} where {nᵢ,pᵢ} 
+cFT{d} = cFourierTransform{nᵢ,pᵢ,d} where {nᵢ,pᵢ} 
+
+
 ## =====================================================
 #  This allows broadcasting an fft plan to slices indexed by trailing dimensions
 #  note: t isa Int or a tuple of ints
 abstract type LastDimSize{t} end
-
-
-## =====================================================
-# generic multiply
-(*)(::Type{FT}, x::Array) where FT<:FourierTransform = plan(FT) * x
-(\)(::Type{FT}, x::Array) where FT<:FourierTransform = plan(FT) \ x
 
 
 ## =====================================================

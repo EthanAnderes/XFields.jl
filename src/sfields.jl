@@ -1,9 +1,6 @@
 ## =====================================================
 # Smap{FT} and Sfourier{FT} where FT<:FourierTransform 
 
-rFT{d} = rFourierTransform{nᵢ,pᵢ,d} where {nᵢ,pᵢ} 
-
-
 struct Smap{FT<:rFourierTransform,d} <: XField{FT}
     x::Array{F64,d}
     Smap{FT,d}(x) where {d,FT<:rFT{d}} = new{FT,d}(x)
