@@ -3,11 +3,11 @@
 #%% which defines the fields as slices of an Array{Float64,3}
 #%% ==============================================================
 
-module S0S2Fields2
+module S0S2Fields
 
 using XFields
 import LinearAlgebra: dot
-import Base: getindex, promote_rule, convert
+import Base: getindex, promote_rule, convert, *, \
 
 export S0S2map, S0S2fourier, S0S2field
 
@@ -28,10 +28,11 @@ struct S0S2map{FT<:rFourierTransform} <: XField{FT}
     S0S2map{FT}(x::AA{2}) where {FT<:rFT2} = new{FT}(cat(x,x,x,dims=3))
     S0S2map{FT}(x1::AA{2}, x2::AA{2}, x3::AA{2}) where {FT<:rFT2} = new{FT}(cat(x1,x2,x3,dims=3))
     S0S2map{FT}() where {FT<:rFT2}          = new{FT}(zeros(F64, Grid(FT).nxi...,3))
-    function S0S2map{FT}(n1::Number, n2::Number, n3::Number) where {FT<:rFT2} 
-        mn1 = fill(F64(n1), Grid(FT).nxi...)
-        mn2 = fill(F64(n2), Grid(FT).nxi...)
-        mn3 = fill(F64(n3), Grid(FT).nxi...)
+    function S0S2map{FT}(n1, n2, n3) where {FT<:rFT2} 
+        ons = fill(F64(1), Grid(FT).nxi...)
+        mn1 = n1 .* ons
+        mn2 = n2 .* ons
+        mn3 = n3 .* ons
         return new{FT}(cat(mn1,mn2,mn3,dims=3))
     end
 end
@@ -42,10 +43,11 @@ struct S0S2fourier{FT<:rFourierTransform} <: XField{FT}
     S0S2fourier{FT}(x::AA{2}) where {FT<:rFT2} = new{FT}(cat(x,x,x,dims=3))
     S0S2fourier{FT}(x1::AA{2}, x2::AA{2}, x3::AA{2}) where {FT<:rFT2} = new{FT}(cat(x1,x2,x3,dims=3))
     S0S2fourier{FT}() where {FT<:rFT2}          = new{FT}(zeros(CF64, Grid(FT).nki...,3))
-    function S0S2fourier{FT}(n1::Number, n2::Number, n3::Number) where {FT<:rFT2} 
-        mn1 = fill(CF64(n1), Grid(FT).nki...)
-        mn2 = fill(CF64(n2), Grid(FT).nki...)
-        mn3 = fill(CF64(n3), Grid(FT).nki...)
+    function S0S2fourier{FT}(n1, n2, n3) where {FT<:rFT2} 
+        ons = fill(CF64(1), Grid(FT).nki...)
+        mn1 = n1 .* ons
+        mn2 = n2 .* ons
+        mn3 = n3 .* ons
         return new{FT}(cat(mn1,mn2,mn3,dims=3))
     end
 end
