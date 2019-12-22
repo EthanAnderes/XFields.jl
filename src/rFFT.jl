@@ -1,11 +1,15 @@
-## =====================================================
-# rFFT and rFFTunitary
+
+#%% rFFT and rFFTunitary for real fft operations
+#%% ============================================================
+
 struct rFFT{nᵢ,pᵢ,d}        <: rFourierTransform{nᵢ,pᵢ,d}  end
 struct rFFTunitary{nᵢ,pᵢ,d} <: rFourierTransform{nᵢ,pᵢ,d}  end
 
-Base.:*(::Type{FT}, x::Array) where FT<:Union{rFFT, rFFTunitary} = plan(FT) * x
-Base.:\(::Type{FT}, x::Array) where FT<:Union{rFFT, rFFTunitary} = plan(FT) \ x
+#%% basic functionality
+(*)(::Type{FT}, x::Array) where FT<:Union{rFFT, rFFTunitary} = plan(FT) * x
+(\)(::Type{FT}, x::Array) where FT<:Union{rFFT, rFFTunitary} = plan(FT) \ x
 
+#%% constructors
 function rFFT(;nᵢ, pᵢ=nothing, Δxᵢ=nothing) 
     nᵢ,pᵢ,d = _get_npd(;nᵢ=nᵢ, pᵢ=pᵢ, Δxᵢ=Δxᵢ)
     rFFT{nᵢ,pᵢ,d}
@@ -15,9 +19,11 @@ function rFFTunitary(;nᵢ, pᵢ=nothing, Δxᵢ=nothing)
     rFFTunitary{nᵢ,pᵢ,d}
 end
 
+#%% used in fourier_transforms/plan's
 fft_mult(::Type{F}) where F<:rFFT{nᵢ,pᵢ,d}        where {nᵢ,pᵢ,d} = prod(Δx / √(2π) for Δx ∈ Grid(F).Δxi) 
 fft_mult(::Type{F}) where F<:rFFTunitary{nᵢ,pᵢ,d} where {nᵢ,pᵢ,d} = prod(1 / √(n) for n ∈ nᵢ) 
 
+#%% specify the corresponding grid geometry
 @generated function Grid(::Type{F}) where F<:Union{rFFT{nᵢ,pᵢ,d},rFFTunitary{nᵢ,pᵢ,d}} where {nᵢ,pᵢ,d}
     y = map(nᵢ, pᵢ, 1:d) do n, p, i
         Δx     = p/n
@@ -40,14 +46,7 @@ fft_mult(::Type{F}) where F<:rFFTunitary{nᵢ,pᵢ,d} where {nᵢ,pᵢ,d} = prod
     Grid{nᵢ,pᵢ,d}(Δxi, Δki, xi, ki, nyqi, Ωx, Ωk, nki, nxi, pᵢ, d)
 end
  
-
-## ==============================================
-# Used for constructing the covariance matrix of a subset of frequencies
-"""
-`get_rFFTimpulses(::Type{rFFT}) -> (rFFTimpulses, CI, LI, get_dual_ci)`
-so that `rFFTimpulses(CI[i,j]) -> (φ,iφ)` which give impulse responses that can be 
-applied on the left of a cov operator `E(Z*Zᴴ)` to yield it's column. 
-"""
+#%% Used for constructing the covariance matrix of a subset of frequencies
 function get_rFFTimpulses(::Type{rFT}) where {nᵢ,pᵢ,dim,rFT<:rFourierTransform{nᵢ,pᵢ,dim}} 
     rg = Grid(rFT)
     CI = CartesianIndices(Base.OneTo.(rg.nki))

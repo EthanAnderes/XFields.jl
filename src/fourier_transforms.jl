@@ -1,10 +1,11 @@
-## =====================================================
+
+#%% Transform types
+#%% ============================================================
+
 abstract type Transform end
 
-## =====================================================
 # nᵢ ≡ number of grid evaluations to a side
 # pᵢ ≡ period (e.g. grid evals at {0, pᵢ/nᵢ, pᵢ2/nᵢ, …, pᵢ(nᵢ-1)/nᵢ})
-
 abstract type FourierTransform{nᵢ,pᵢ,d}  <: Transform end
 abstract type rFourierTransform{nᵢ,pᵢ,d} <: FourierTransform{nᵢ,pᵢ,d} end
 abstract type cFourierTransform{nᵢ,pᵢ,d} <: FourierTransform{nᵢ,pᵢ,d} end
@@ -12,15 +13,12 @@ abstract type cFourierTransform{nᵢ,pᵢ,d} <: FourierTransform{nᵢ,pᵢ,d} en
 rFT{d} = rFourierTransform{nᵢ,pᵢ,d} where {nᵢ,pᵢ} 
 cFT{d} = cFourierTransform{nᵢ,pᵢ,d} where {nᵢ,pᵢ} 
 
-
-## =====================================================
 #  This allows broadcasting an fft plan to slices indexed by trailing dimensions
 #  note: t isa Int or a tuple of ints
 abstract type LastDimSize{t} end
 
-
-## =====================================================
-#  Generated functions for the plans
+#%% Generated functions for the plans
+#%% -------------------------------------------------------------
 
 @generated function plan(::Type{F}) where {nᵢ, pᵢ, d, F<:rFourierTransform{nᵢ,pᵢ,d}}
     FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d}(undef, nᵢ...); flags=FFTW.ESTIMATE)
@@ -63,17 +61,14 @@ end
     return :( $FFT )
 end
 
+#%% fallback default fft_mult used in the plan
+#%% -------------------------------------------------------------
 
-
-# fallback default
 fft_mult(::Type{F}) where F<:FourierTransform = 1
 
 
-
-
-
-## =====================================================
-# container for grid information of F<:FourierTransform{nᵢ,pᵢ,d}
+#%% Grid struct ... container for grid information of F<:FourierTransform{nᵢ,pᵢ,d}
+#%% ============================================================
 
 struct Grid{nᵢ,pᵢ,dim}
     Δxi::NTuple{dim,Float64}
@@ -122,8 +117,16 @@ end
 pixels(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} = map(i->pixels(F,i), tuple(1:d...))::NTuple{d,Array{Float64,d}}
 
 
-## =====================================================
-# misc ...
+#%% util
+#%% ============================================================
+
+
+function adjoint(F::FFTW.ScaledPlan)
+    iF = inv(F)
+    return (F.scale / iF.scale) * iF
+end
+
+transpose(F::FFTW.ScaledPlan) = F
 
 """
 ` nᵢ, pᵢ, d = _get_npd(;nᵢ, pᵢ=nothing, Δxᵢ=nothing)` is used primarily to to check dimensions are valid
@@ -157,10 +160,3 @@ function _fft_output_index_2_freq(ind, nside, period)
     return  ifelse(kpre <= nyq, kpre, kpre - 2nyq) # option 1
     # return ifelse(kpre < nyq, kpre, kpre - 2nyq)  # option 2
 end
-
-function LinearAlgebra.adjoint(F::FFTW.ScaledPlan)
-    iF = inv(F)
-    return (F.scale / iF.scale) * iF
-end
-
-Base.transpose(F::FFTW.ScaledPlan) = F

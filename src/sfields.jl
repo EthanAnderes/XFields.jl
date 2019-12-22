@@ -1,5 +1,6 @@
-## =====================================================
-# Smap{FT} and Sfourier{FT} where FT<:FourierTransform 
+
+#%% Smap{FT} and Sfourier{FT} where FT<:FourierTransform 
+#%% ============================================================
 
 struct Smap{FT<:rFourierTransform,d} <: XField{FT}
     x::Array{F64,d}

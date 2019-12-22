@@ -1,7 +1,12 @@
-## =====================================================
+
+#%% XField abstract type
+#%% ============================================================
+
 abstract type XField{T<:Transform} end
 
-#@generated fielddata(x::XField) = :(tuple($((:(x.$f) for f=fieldnames(x))...)))
+#%% util methods
+#%% -----------------------------------------------------------
+
 @generated function fielddata(x::XField)
 	f = fieldname(x, 1)
 	:(x.$f)
@@ -15,19 +20,8 @@ nan2zero(f::F) where F<:XField = F(broadcast(nan2zero, fielddata(f)))
 pos_part(x::T) where T<:Number = clamp(x,zero(T),T(Inf))
 neg_part(x::T) where T<:Number = -clamp(x,-T(Inf),zero(T))
 
-
-
 #%% field operations
-#%% ============================================================
-
-#%% fields and scalars
-# :+(f::F, n::Number) where F<:XField = F((ff .+ n for ff in fielddata(f))...)
-# :+(n::Number, f::F) where F<:XField = F((ff .+ n for ff in fielddata(f))...)
-# :-(f::F)            where F<:XField = F((.- ff for ff in fielddata(f))...)
-# :-(f::F, n::Number) where F<:XField = F((ff .- n for ff in fielddata(f))...)
-# :-(n::Number, f::F) where F<:XField = F((n .- ff for ff in fielddata(f))...)
-# :*(f::F, n::Number) where F<:XField = F((n .*  ff for ff in fielddata(f))...)
-# :*(n::Number, f::F) where F<:XField = F((n .*  ff for ff in fielddata(f))...)
+#%% -----------------------------------------------------------
 
 # op(f::XField, n::Number) and op(n::Number, f::XField)
 for op in (:+, :-, :*)
@@ -57,6 +51,7 @@ end
 (\)(J::UniformScaling, f::F) where F<:XField = (1/J.λ) * f
 
 
+
 #%% linear operators diagonal in a XField basis
 #%% ============================================================
 
@@ -64,26 +59,26 @@ struct DiagOp{F<:XField}
     f::F
 end
 
-# getindex and basic operator functionality
+#%% getindex and basic operator functionality
+#%% -----------------------------------------------------------
+
 diag(O::DiagOp) = O.f
 getindex(O::DiagOp, i)   = getindex(O.f, i) # indexing is propigated
 (*)(O::DiagOp{F}, f::G) where {F<:XField, G<:XField} = G(O.f * F(f))
 (\)(O::DiagOp{F}, f::G) where {F<:XField, G<:XField} = G(inv(O).f * F(f))
 
+#%% Operations with
+#%% -----------------------------------------------------------
+
 # op(DiagOp, Number) and op(Number, DiagOp)
 (*)(O::DiagOp{F}, a::Number)  where F<:XField = DiagOp(a * O.f)
 (*)(a::Number, O::DiagOp{F})  where F<:XField = DiagOp(a * O.f)
 (-)(O::DiagOp{F}) where F<:XField = DiagOp(-O.f)
-# :^(op::DiagOp{F}, a::Number)  where F<:XField = DiagOp(F((i.^a for i in fielddata(op.f))...))
-# :^(op::DiagOp{F}, a::Integer) where F<:XField = DiagOp(F((i.^a for i in fielddata(op.f))...))
-# sqrt(op::DiagOp{F}) where F<:XField            = DiagOp(F((sqrt.(i) for i in fielddata(op.f))...))
-# inv(op::DiagOp{F}) where F<:XField = DiagOp(F((squash.(inv.(i)) for i in fielddata(op.f))... ))
 (^)(O::DiagOp{F}, a::Number)  where F<:XField = DiagOp(O.f^a)
 (^)(O::DiagOp{F}, a::Integer) where F<:XField = DiagOp(O.f^a)
 
 # op(DiagOp)
 sqrt(O::DiagOp{F}) where F<:XField = DiagOp(sqrt(O.f))
-# inv(O::DiagOp{F}) where F<:XField  = DiagOp(nan2zero(inv(O.f)))
 inv(O::DiagOp{F}) where F<:XField  = DiagOp(F(nan2zero.(inv.(fielddata(O.f)))))
 
 # ops of the same type

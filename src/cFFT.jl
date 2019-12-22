@@ -1,11 +1,15 @@
-## =====================================================
-# cFFT and cFFTunitary
+
+#%% cFFT and cFFTunitary for full fft operations
+#%% ============================================================
+
 struct cFFT{nᵢ,pᵢ,d}        <: cFourierTransform{nᵢ,pᵢ,d}  end
 struct cFFTunitary{nᵢ,pᵢ,d} <: cFourierTransform{nᵢ,pᵢ,d}  end
 
-Base.:*(::Type{FT}, x::Array) where FT<:Union{cFFT, cFFTunitary} = plan(FT) * x
-Base.:\(::Type{FT}, x::Array) where FT<:Union{cFFT, cFFTunitary} = plan(FT) \ x
+#%% basic functionality
+(*)(::Type{FT}, x::Array) where FT<:Union{cFFT, cFFTunitary} = plan(FT) * x
+(\)(::Type{FT}, x::Array) where FT<:Union{cFFT, cFFTunitary} = plan(FT) \ x
 
+#%% constructors
 function cFFT(;nᵢ, pᵢ=nothing, Δxᵢ=nothing) 
     nᵢ,pᵢ,d = _get_npd(;nᵢ=nᵢ, pᵢ=pᵢ, Δxᵢ=Δxᵢ)
     cFFT{nᵢ,pᵢ,d}
@@ -15,9 +19,11 @@ function cFFTunitary(;nᵢ, pᵢ=nothing, Δxᵢ=nothing)
     cFFTunitary{nᵢ,pᵢ,d}
 end
 
+#%% used in fourier_transforms/plan's
 fft_mult(::Type{F}) where F<:cFFT{nᵢ,pᵢ,d}        where {nᵢ,pᵢ,d} = prod(Δx / √(2π) for Δx ∈ Grid(F).Δxi) 
 fft_mult(::Type{F}) where F<:cFFTunitary{nᵢ,pᵢ,d} where {nᵢ,pᵢ,d} = prod(1 / √(n) for n ∈ nᵢ) 
 
+#%% specify the corresponding grid geometry
 @generated function Grid(::Type{F}) where F<:Union{cFFT{nᵢ,pᵢ,d},cFFTunitary{nᵢ,pᵢ,d}} where {nᵢ,pᵢ,d}
     y = map(nᵢ, pᵢ, 1:d) do n, p, i
         Δx     = p/n
