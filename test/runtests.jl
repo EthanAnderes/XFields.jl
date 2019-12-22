@@ -1,4 +1,5 @@
 using XFields
+using LinearAlgebra
 using Test
 
 mean(x) = sum(x) / length(x)

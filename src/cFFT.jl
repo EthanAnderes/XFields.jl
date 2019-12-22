@@ -3,8 +3,8 @@
 struct cFFT{nᵢ,pᵢ,d}        <: cFourierTransform{nᵢ,pᵢ,d}  end
 struct cFFTunitary{nᵢ,pᵢ,d} <: cFourierTransform{nᵢ,pᵢ,d}  end
 
-(*)(::Type{FT}, x::Array) where FT<:Union{cFFT, cFFTunitary} = plan(FT) * x
-(\)(::Type{FT}, x::Array) where FT<:Union{cFFT, cFFTunitary} = plan(FT) \ x
+Base.:*(::Type{FT}, x::Array) where FT<:Union{cFFT, cFFTunitary} = plan(FT) * x
+Base.:\(::Type{FT}, x::Array) where FT<:Union{cFFT, cFFTunitary} = plan(FT) \ x
 
 function cFFT(;nᵢ, pᵢ=nothing, Δxᵢ=nothing) 
     nᵢ,pᵢ,d = _get_npd(;nᵢ=nᵢ, pᵢ=pᵢ, Δxᵢ=Δxᵢ)

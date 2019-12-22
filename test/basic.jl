@@ -1,4 +1,64 @@
 
+
+
+#%% Uniform scaling
+#%% ------------------------------------------
+
+let FT = rFFT(nᵢ=(256, 50), pᵢ=(1.0, 0.5))
+
+	fmap = rand(Bool, Grid(FT).nxi...) |> Smap{FT}
+	gfourier = rand(Bool, Grid(FT).nki...) |> Sfourier{FT}
+
+	Dmap = DiagOp(fmap)
+	Dfourier = DiagOp(fmap)
+
+	Id2 = 2*LinearAlgebra.I
+
+	@inferred Id2 * fmap 
+	@inferred Id2 * gfourier
+	@inferred Id2 \ fmap 
+	@inferred Id2 \ gfourier
+
+	@inferred Dmap * Id2
+	@inferred Dfourier * Id2
+	@inferred Dmap + Id2
+	@inferred Dfourier + Id2
+	@inferred Dmap - Id2
+	@inferred Dfourier - Id2
+
+	@inferred Id2 * Dmap
+	@inferred Id2 * Dfourier
+	@inferred Id2 + Dmap
+	@inferred Id2 + Dfourier
+	@inferred Id2 - Dmap
+	@inferred Id2 - Dfourier 
+
+
+	# @test Id2 * fmap 
+	# @test Id2 * gfourier
+	# @test Id2 \ fmap 
+	# @test Id2 \ gfourier
+
+	# @test Dmap * Id2
+	# @test Dfourier * Id2
+	# @test Dmap + Id2
+	# @test Dfourier + Id2
+	# @test Dmap - Id2
+	# @test Dfourier - Id2
+
+	# @test Id2 * Dmap
+	# @test Id2 * Dfourier
+	# @test Id2 + Dmap
+	# @test Id2 + Dfourier
+	# @test Id2 - Dmap
+	# @test Id2 - Dfourier 
+
+
+
+
+end
+
+
 #%% SField Constructors
 #%% ------------------------------------------
 
@@ -83,7 +143,6 @@ f3 = Smap{FT}(f2)
 
 f1 + f2
 - 2 * f2
-map(x -> sin.(cos.(x)), fielddata(f1)) |> x->Smap{FT}(x...)
 
 L = DiagOp(f1)
 L * f2
@@ -123,7 +182,6 @@ f3 = Smap{FT}(f2)
 
 f1 + f2
 - 2 * f2
-map(x -> sin.(cos.(x)), fielddata(f1)) |> x->Smap{FT}(x...)
 
 L = DiagOp(f1)
 L * f2
@@ -221,7 +279,6 @@ f3 = Smap{FFT}(f2)
 
 @inferred f1 + f2
 @inferred - 2 * f2
-map(x -> sin.(cos.(x)), fielddata(f1)) |> x->Smap{FFT}(x...)
 
 L = DiagOp(f1)
 L * f2
@@ -265,7 +322,6 @@ f3 = Smap{FFT}(f2)
 
 @inferred f1 + f2
 @inferred - 2 * f2
-map(x -> sin.(cos.(x)), fielddata(f1)) |> x->Smap{FFT}(x...)
 
 L = DiagOp(f1)
 L * f2

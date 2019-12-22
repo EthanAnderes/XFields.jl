@@ -158,9 +158,9 @@ function _fft_output_index_2_freq(ind, nside, period)
     # return ifelse(kpre < nyq, kpre, kpre - 2nyq)  # option 2
 end
 
-function adjoint(F::FFTW.ScaledPlan)
+function LinearAlgebra.adjoint(F::FFTW.ScaledPlan)
     iF = inv(F)
     return (F.scale / iF.scale) * iF
 end
 
-transpose(F::FFTW.ScaledPlan) = F
+Base.transpose(F::FFTW.ScaledPlan) = F
