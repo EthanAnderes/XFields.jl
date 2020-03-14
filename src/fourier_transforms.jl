@@ -1,4 +1,3 @@
-
 #%% Transform types
 #%% ============================================================
 
@@ -21,12 +20,12 @@ abstract type LastDimSize{t} end
 #%% -------------------------------------------------------------
 
 @generated function plan(::Type{F}) where {nᵢ, pᵢ, d, F<:rFourierTransform{nᵢ,pᵢ,d}}
-    FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d}(undef, nᵢ...); flags=FFTW.ESTIMATE)
+    FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d}(undef, nᵢ...)) #; flags=FFTW.PATIENT, timelimit=5)
     return :( $FFT )
 end
 
 @generated function plan(::Type{F}) where {nᵢ, pᵢ, d, F<:cFourierTransform{nᵢ,pᵢ,d}}
-    FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d}(undef, nᵢ...); flags=FFTW.ESTIMATE)
+    FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d}(undef, nᵢ...)) #; flags=FFTW.PATIENT, timelimit=5)
     return :( $FFT )
 end
 
@@ -40,14 +39,13 @@ end
     return :( $FFT )
 end
 
-
 @generated function plan(::Type{F}, ::Type{LastDimSize{t}}) where {t, nᵢ, pᵢ, d, F<:rFourierTransform{nᵢ,pᵢ,d}}
-    FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d+length(t)}(undef, nᵢ... ,t...), 1:d; flags=FFTW.ESTIMATE)
+    FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d+length(t)}(undef, nᵢ... ,t...), 1:d) #; flags=FFTW.PATIENT)
     return :( $FFT )
 end
 
 @generated function plan(::Type{F}, ::Type{LastDimSize{t}}) where {t, nᵢ, pᵢ, d, F<:cFourierTransform{nᵢ,pᵢ,d}}
-    FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d+length(t)}(undef, nᵢ..., t...), 1:d; flags=FFTW.ESTIMATE)
+    FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d+length(t)}(undef, nᵢ..., t...), 1:d) #; flags=FFTW.PATIENT)
     return :( $FFT )
 end
 
@@ -65,7 +63,6 @@ end
 #%% -------------------------------------------------------------
 
 fft_mult(::Type{F}) where F<:FourierTransform = 1
-
 
 #%% Grid struct ... container for grid information of F<:FourierTransform{nᵢ,pᵢ,d}
 #%% ============================================================
@@ -119,7 +116,6 @@ pixels(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} = map(
 
 #%% util
 #%% ============================================================
-
 
 function adjoint(F::FFTW.ScaledPlan)
     iF = inv(F)

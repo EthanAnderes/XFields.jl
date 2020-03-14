@@ -1,4 +1,3 @@
-
 #%% XField abstract type
 #%% ============================================================
 
@@ -49,8 +48,6 @@ end
 (*)(f::F, J::UniformScaling) where F<:XField = J.λ * f
 (*)(J::UniformScaling, f::F) where F<:XField = J.λ * f
 (\)(J::UniformScaling, f::F) where F<:XField = (1/J.λ) * f
-
-
 
 #%% linear operators diagonal in a XField basis
 #%% ============================================================

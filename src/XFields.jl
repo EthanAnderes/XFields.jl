@@ -9,7 +9,6 @@ const module_dir  = joinpath(@__DIR__, "..") |> normpath
 const F64   = Float64
 const CF64  = Complex{Float64}
 
-
 include("fourier_transforms.jl")
 export rFourierTransform, cFourierTransform, FourierTransform, Transform
 export plan, cplan, rplan

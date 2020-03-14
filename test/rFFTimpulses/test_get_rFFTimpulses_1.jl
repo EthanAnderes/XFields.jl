@@ -19,6 +19,8 @@ let
 	]
 
 	for (rFT,cFT) ∈ zip(rFTvals, cFTvals)
+		@show rFT
+
 		rFTp, rg = rFT |> x->(plan(x),Grid(x))
 		cFTp, cg = cFT |> x->(plan(x),Grid(x))
 		

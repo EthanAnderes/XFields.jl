@@ -6,18 +6,18 @@ struct Smap{FT<:rFourierTransform,d} <: XField{FT}
     x::Array{F64,d}
     Smap{FT,d}(x) where {d,FT<:rFT{d}} = new{FT,d}(x)
     Smap{FT}(x::Array{F64,d}) where {d,FT<:rFT{d}} = new{FT,d}(x)
-	Smap{FT}(x::AbstractArray{T,d}) where {T,d,FT<:rFT{d}} = new{FT,d}(F64.(x))
-	Smap{FT}() where {d,FT<:rFT{d}} = new{FT,d}(zeros(F64, Grid(FT).nxi))
-	Smap{FT}(n::Number) where {d,FT<:rFT{d}} = new{FT,d}(fill(F64(n), Grid(FT).nxi))
+    Smap{FT}(x::AbstractArray{T,d}) where {T,d,FT<:rFT{d}} = new{FT,d}(F64.(x))
+    Smap{FT}() where {d,FT<:rFT{d}} = new{FT,d}(zeros(F64, Grid(FT).nxi))
+    Smap{FT}(n::Number) where {d,FT<:rFT{d}} = new{FT,d}(fill(F64(n), Grid(FT).nxi))
 end
 
 struct Sfourier{FT<:rFourierTransform,d} <: XField{FT}
     k::Array{CF64,d}
     Sfourier{FT,d}(k) where {d,FT<:rFT{d}} = new{FT,d}(k)
     Sfourier{FT}(k::Array{CF64,d}) where {d,FT<:rFT{d}} = new{FT,d}(k)
-	Sfourier{FT}(k::AbstractArray{T,d}) where {T,d,FT<:rFT{d}} = new{FT,d}(CF64.(k))
-	Sfourier{FT}() where {d,FT<:rFT{d}} = new{FT,d}(zeros(CF64, Grid(FT).nki))
-	Sfourier{FT}(n::Number) where {d,FT<:rFT{d}} = new{FT,d}(fill(CF64(n), Grid(FT).nki))
+    Sfourier{FT}(k::AbstractArray{T,d}) where {T,d,FT<:rFT{d}} = new{FT,d}(CF64.(k))
+    Sfourier{FT}() where {d,FT<:rFT{d}} = new{FT,d}(zeros(CF64, Grid(FT).nki))
+    Sfourier{FT}(n::Number) where {d,FT<:rFT{d}} = new{FT,d}(fill(CF64(n), Grid(FT).nki))
 end
 
 #  union type
