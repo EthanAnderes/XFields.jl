@@ -20,12 +20,12 @@ abstract type LastDimSize{t} end
 #%% -------------------------------------------------------------
 
 @generated function plan(::Type{F}) where {nᵢ, pᵢ, d, F<:rFourierTransform{nᵢ,pᵢ,d}}
-    FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d}(undef, nᵢ...)) #; flags=FFTW.PATIENT, timelimit=5)
+    FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d}(undef, nᵢ...); flags=FFTW.PATIENT, timelimit=45)
     return :( $FFT )
 end
 
 @generated function plan(::Type{F}) where {nᵢ, pᵢ, d, F<:cFourierTransform{nᵢ,pᵢ,d}}
-    FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d}(undef, nᵢ...)) #; flags=FFTW.PATIENT, timelimit=5)
+    FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d}(undef, nᵢ...); flags=FFTW.PATIENT, timelimit=45)
     return :( $FFT )
 end
 
@@ -40,12 +40,12 @@ end
 end
 
 @generated function plan(::Type{F}, ::Type{LastDimSize{t}}) where {t, nᵢ, pᵢ, d, F<:rFourierTransform{nᵢ,pᵢ,d}}
-    FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d+length(t)}(undef, nᵢ... ,t...), 1:d) #; flags=FFTW.PATIENT)
+    FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d+length(t)}(undef, nᵢ... ,t...), 1:d; flags=FFTW.PATIENT, timelimit=45)
     return :( $FFT )
 end
 
 @generated function plan(::Type{F}, ::Type{LastDimSize{t}}) where {t, nᵢ, pᵢ, d, F<:cFourierTransform{nᵢ,pᵢ,d}}
-    FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d+length(t)}(undef, nᵢ..., t...), 1:d) #; flags=FFTW.PATIENT)
+    FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d+length(t)}(undef, nᵢ..., t...), 1:d; flags=FFTW.PATIENT, timelimit=45)
     return :( $FFT )
 end
 
