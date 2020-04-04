@@ -4,10 +4,6 @@
 struct rFFT{nᵢ,pᵢ,d}        <: rFourierTransform{nᵢ,pᵢ,d}  end
 struct rFFTunitary{nᵢ,pᵢ,d} <: rFourierTransform{nᵢ,pᵢ,d}  end
 
-#%% basic functionality
-(*)(::Type{FT}, x::Array) where FT<:Union{rFFT, rFFTunitary} = plan(FT) * x
-(\)(::Type{FT}, x::Array) where FT<:Union{rFFT, rFFTunitary} = plan(FT) \ x
-
 #%% constructors
 function rFFT(;nᵢ, pᵢ=nothing, Δxᵢ=nothing) 
     nᵢ,pᵢ,d = _get_npd(;nᵢ=nᵢ, pᵢ=pᵢ, Δxᵢ=Δxᵢ)
@@ -18,9 +14,13 @@ function rFFTunitary(;nᵢ, pᵢ=nothing, Δxᵢ=nothing)
     rFFTunitary{nᵢ,pᵢ,d}
 end
 
+#%% basic functionality
+(*)(::Type{FT}, x::Array) where FT<:Union{rFFT, rFFTunitary} = plan(FT) * x
+(\)(::Type{FT}, x::Array) where FT<:Union{rFFT, rFFTunitary} = plan(FT) \ x
+
 #%% used in fourier_transforms/plan's
-fft_mult(::Type{F}) where F<:rFFT{nᵢ,pᵢ,d}        where {nᵢ,pᵢ,d} = prod(Δx / √(2π) for Δx ∈ Grid(F).Δxi) 
-fft_mult(::Type{F}) where F<:rFFTunitary{nᵢ,pᵢ,d} where {nᵢ,pᵢ,d} = prod(1 / √(n) for n ∈ nᵢ) 
+fft_mult(::Type{FT}) where FT<:rFFT{nᵢ,pᵢ,d}        where {nᵢ,pᵢ,d} = prod(Δx / √(2π) for Δx ∈ Grid(FT).Δxi) 
+fft_mult(::Type{FT}) where FT<:rFFTunitary{nᵢ,pᵢ,d} where {nᵢ,pᵢ,d} = prod(1 / √(n) for n ∈ nᵢ) 
 
 #%% specify the corresponding grid geometry
 @generated function Grid(::Type{F}) where F<:Union{rFFT{nᵢ,pᵢ,d},rFFTunitary{nᵢ,pᵢ,d}} where {nᵢ,pᵢ,d}
@@ -42,7 +42,7 @@ fft_mult(::Type{F}) where F<:rFFTunitary{nᵢ,pᵢ,d} where {nᵢ,pᵢ,d} = prod
     Ωx      = prod(Δxi)
     nxi     = nᵢ
     nki     = map(length, ki)
-    Grid{nᵢ,pᵢ,d}(Δxi, Δki, xi, ki, nyqi, Ωx, Ωk, nki, nxi, pᵢ, d)
+    return Grid{nᵢ,pᵢ,d}(Δxi, Δki, xi, ki, nyqi, Ωx, Ωk, nki, nxi, pᵢ, d)
 end
  
 #%% Used for constructing the covariance matrix of a subset of frequencies

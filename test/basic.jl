@@ -211,8 +211,8 @@ gridu1 = Grid(FFTu1)
 gridu2 = Grid(FFTu2)
 gridu3 = Grid(FFTu3)
 
-@test grid1 == grid2 == grid3
-@test gridu1 == gridu2 == gridu3
+@test grid1.ki == grid2.ki == grid3.ki
+@test gridu1.ki == gridu2.ki == gridu3.ki
 
 
 
@@ -251,8 +251,9 @@ rfx = rand(Float64, grid.nxi...)
 @test sum(abs2, plan(rUFT) * rfx .- rplan(cUFT) * rfx) ≈ 0.0 
 
 @inferred adjoint(plan(cFT))
+@inferred adjoint(plan(rFT))
 @inferred transpose(plan(cFT))
-@inferred inv(plan(cFT))
+@inferred transpose(plan(rFT))
 
 
 

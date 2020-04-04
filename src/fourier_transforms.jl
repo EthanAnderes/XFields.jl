@@ -16,48 +16,159 @@ cFT{d} = cFourierTransform{nᵢ,pᵢ,d} where {nᵢ,pᵢ}
 #  note: t isa Int or a tuple of ints
 abstract type LastDimSize{t} end
 
-#%% Generated functions for the plans
+
+
+#%% Low level container for forward/backward plans and normalization
+#%% -------------------------------------------------------------
+#%% Instances of these containers know how to mult and divide
+
+
+# Here we 
+struct rFFTholder{T<:Real,d}
+    FT::FFTW.rFFTWPlan{T,-1,false,d}
+    IFT::FFTW.rFFTWPlan{Complex{T},1,false,d}
+    normalize_FT::T
+    normalize_IFT::T
+end
+struct Adjoint_rFFTholder{T<:Real,d}
+    FT::FFTW.rFFTWPlan{T,-1,false,d}
+    IFT::FFTW.rFFTWPlan{Complex{T},1,false,d}
+    normalize_FT::T
+    normalize_IFT::T
+end
+
+
+struct cFFTholder{T<:Real,d} # d is the total dimension of the array it operates on
+    FT::FFTW.cFFTWPlan{Complex{T},-1,false,d}
+    IFT::FFTW.cFFTWPlan{Complex{T},1,false,d}
+    normalize_FT::T
+    normalize_IFT::T
+end
+struct Adjoint_cFFTholder{T<:Real,d} # d is the total dimension of the array it operates on
+    FT::FFTW.cFFTWPlan{Complex{T},-1,false,d}
+    IFT::FFTW.cFFTWPlan{Complex{T},1,false,d}
+    normalize_FT::T
+    normalize_IFT::T
+end
+
+
+(*)(p::rFFTholder, x::Array) = p.normalize_FT .* (p.FT * x)
+(*)(p::cFFTholder, x::Array) = p.normalize_FT .* (p.FT * x)
+(*)(p::Adjoint_rFFTholder, x::Array) = p.normalize_FT .* (p.IFT * x)
+(*)(p::Adjoint_cFFTholder, x::Array) = p.normalize_FT .* (p.IFT * x)
+
+(\)(p::rFFTholder, x::Array) = p.normalize_IFT .* (p.IFT * x) 
+(\)(p::cFFTholder, x::Array) = p.normalize_IFT .* (p.IFT * x) 
+(\)(p::Adjoint_rFFTholder, x::Array) = p.normalize_IFT .* (p.FT * x) 
+(\)(p::Adjoint_cFFTholder, x::Array) = p.normalize_IFT .* (p.FT * x) 
+
+
+adjoint(p::rFFTholder{T,d}) where {T,d} = Adjoint_rFFTholder{T,d}(p.FT,p.IFT,p.normalize_FT,p.normalize_IFT)
+adjoint(p::cFFTholder{T,d}) where {T,d} = Adjoint_cFFTholder{T,d}(p.FT,p.IFT,p.normalize_FT,p.normalize_IFT)
+
+transpose(p::rFFTholder) = p
+transpose(p::cFFTholder) = p
+
+
+#%% Plans (TODO: get rid of the allocation for the planned ffts)
 #%% -------------------------------------------------------------
 
 @generated function plan(::Type{F}) where {nᵢ, pᵢ, d, F<:rFourierTransform{nᵢ,pᵢ,d}}
-    FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d}(undef, nᵢ...); flags=FFTW.PATIENT, timelimit=45)
-    return :( $FFT )
+    region = 1:d
+    X      = Array{Float64,d}(undef, nᵢ...) 
+    Y      = Array{Complex{Float64},d}(undef, FFTW.rfft_output_size(X, region)...)
+    mlt    = fft_mult(F)
+
+    FT            = plan_rfft(X, region; flags=FFTW.ESTIMATE) 
+    normalize_FT   = one(eltype(X)) * mlt
+
+    IFT           = plan_brfft(FT*X, nᵢ[1], region; flags=FFTW.ESTIMATE) 
+    normalize_IFT  = FFTW.normalization(X, region) / mlt
+
+    return rFFTholder{Float64,d}(FT,IFT,normalize_FT,normalize_IFT)
 end
 
 @generated function plan(::Type{F}) where {nᵢ, pᵢ, d, F<:cFourierTransform{nᵢ,pᵢ,d}}
-    FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d}(undef, nᵢ...); flags=FFTW.PATIENT, timelimit=45)
-    return :( $FFT )
+    region = 1:d
+    X      = Array{Complex{Float64},d}(undef, nᵢ...) 
+    Y      = Array{Complex{Float64},d}(undef, nᵢ...) 
+    mlt    = fft_mult(F)
+
+    FT            = plan_fft(X, region; flags=FFTW.ESTIMATE) 
+    normalize_FT   = one(eltype(X)) * mlt
+
+    IFT           = plan_bfft(FT*X, region; flags=FFTW.ESTIMATE) 
+    normalize_IFT  = FFTW.normalization(X, region) / mlt
+
+    return cFFTholder{Float64,d}(FT,IFT,normalize_FT,normalize_IFT)
 end
 
-@generated function cplan(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} 
-    FFT  =  fft_mult(F) * plan(cFourierTransform{nᵢ,pᵢ,d})
-    return :( $FFT )
+# broadcasting over last dimensions
+
+@generated function plan(::Type{F}, ::Type{LastDimSize{t}}) where {nt, t<:NTuple{nt,Int}, nᵢ, pᵢ, d, F<:rFourierTransform{nᵢ,pᵢ,d}}
+    region = 1:d
+    nᵢt    = tuple(nᵢ... ,t...)
+    X      = Array{Float64,d+nt}(undef, nᵢt...) 
+    Y      = Array{Complex{Float64},d+nt}(undef, FFTW.rfft_output_size(X, region)...)
+    mlt    = fft_mult(F)
+
+    FT            = plan_rfft(X, region; flags=FFTW.ESTIMATE) 
+    normalize_FT   = one(eltype(X)) * mlt
+
+    IFT           = plan_brfft(FT*X, nᵢ[1], region; flags=FFTW.ESTIMATE) 
+    normalize_IFT  = FFTW.normalization(X, region) / mlt
+
+    return rFFTholder{Float64,d+nt}(FT,IFT,normalize_FT,normalize_IFT)
 end
+
+
+
+@generated function plan(::Type{F}, ::Type{LastDimSize{t}}) where {nt, t<:NTuple{nt,Int}, nᵢ, pᵢ, d, F<:cFourierTransform{nᵢ,pᵢ,d}}
+    region = 1:d
+    nᵢt    = tuple(nᵢ... ,t...)
+    X      = Array{Complex{Float64},d+nt}(undef, nᵢt...) 
+    Y      = Array{Complex{Float64},d+nt}(undef, nᵢt...) 
+    mlt    = fft_mult(F)
+
+    FT             = plan_fft(X, region; flags=FFTW.ESTIMATE) 
+    normalize_FT   = one(eltype(X)) * mlt
+
+    IFT            = plan_bfft(FT*X, region; flags=FFTW.ESTIMATE) 
+    normalize_IFT  = FFTW.normalization(X, region) / mlt
+
+    return cFFTholder{Float64,d+nt}(FT,IFT,normalize_FT,normalize_IFT)
+end
+
+
+# switching from real plan <-> complex plan
+# note: plan(rFourierTransform{nᵢ,pᵢ,d}) defaults to mlt == 1
+# note: plan(cFourierTransform{nᵢ,pᵢ,d}) defaults to mlt == 1
+
 
 @generated function rplan(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} 
-    FFT  =  fft_mult(F) * plan(rFourierTransform{nᵢ,pᵢ,d})
-    return :( $FFT )
+    p   = plan(rFourierTransform{nᵢ,pᵢ,d})
+    mlt = fft_mult(F)
+    return rFFTholder{Float64,d}(p.FT,p.IFT,p.normalize_FT * mlt, p.normalize_IFT / mlt)
+end
+@generated function rplan(::Type{F}, ::Type{LastDimSize{t}}) where {nt, t<:NTuple{nt,Int}, nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} 
+    p   = plan(rFourierTransform{nᵢ,pᵢ,d}, LastDimSize{t})
+    mlt = fft_mult(F)
+    return rFFTholder{Float64,d+nt}(p.FT,p.IFT,p.normalize_FT * mlt, p.normalize_IFT / mlt)
 end
 
-@generated function plan(::Type{F}, ::Type{LastDimSize{t}}) where {t, nᵢ, pᵢ, d, F<:rFourierTransform{nᵢ,pᵢ,d}}
-    FFT  =  fft_mult(F) * plan_rfft(Array{Float64,d+length(t)}(undef, nᵢ... ,t...), 1:d; flags=FFTW.PATIENT, timelimit=45)
-    return :( $FFT )
+
+@generated function cplan(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} 
+    p   = plan(cFourierTransform{nᵢ,pᵢ,d})
+    mlt = fft_mult(F)
+    return cFFTholder{Float64,d}(p.FT,p.IFT,p.normalize_FT * mlt, p.normalize_IFT / mlt)
+end
+@generated function cplan(::Type{F}, ::Type{LastDimSize{t}}) where {nt, t<:NTuple{nt,Int}, nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} 
+    p   = plan(cFourierTransform{nᵢ,pᵢ,d}, LastDimSize{t})
+    mlt = fft_mult(F)
+    return cFFTholder{Float64,d+nt}(p.FT,p.IFT,p.normalize_FT * mlt, p.normalize_IFT / mlt)
 end
 
-@generated function plan(::Type{F}, ::Type{LastDimSize{t}}) where {t, nᵢ, pᵢ, d, F<:cFourierTransform{nᵢ,pᵢ,d}}
-    FFT  =  fft_mult(F) * plan_fft(Array{Complex{Float64},d+length(t)}(undef, nᵢ..., t...), 1:d; flags=FFTW.PATIENT, timelimit=45)
-    return :( $FFT )
-end
 
-@generated function cplan(::Type{F}, ::Type{LastDimSize{t}}) where {t, nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} 
-    FFT  =  fft_mult(F) * plan(cFourierTransform{nᵢ,pᵢ,d}, LastDimSize{t})
-    return :( $FFT )
-end
-
-@generated function rplan(::Type{F}, ::Type{LastDimSize{t}}) where {t, nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} 
-    FFT  =  fft_mult(F) * plan(rFourierTransform{nᵢ,pᵢ,d}, LastDimSize{t})
-    return :( $FFT )
-end
 
 #%% fallback default fft_mult used in the plan
 #%% -------------------------------------------------------------
@@ -116,13 +227,6 @@ pixels(::Type{F}) where {nᵢ, pᵢ, d, F<:FourierTransform{nᵢ,pᵢ,d}} = map(
 
 #%% util
 #%% ============================================================
-
-function adjoint(F::FFTW.ScaledPlan)
-    iF = inv(F)
-    return (F.scale / iF.scale) * iF
-end
-
-transpose(F::FFTW.ScaledPlan) = F
 
 """
 ` nᵢ, pᵢ, d = _get_npd(;nᵢ, pᵢ=nothing, Δxᵢ=nothing)` is used primarily to to check dimensions are valid

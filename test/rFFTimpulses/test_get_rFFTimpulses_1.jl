@@ -19,17 +19,17 @@ let
 	]
 
 	for (rFT,cFT) ∈ zip(rFTvals, cFTvals)
-		@show rFT
 
-		rFTp, rg = rFT |> x->(plan(x),Grid(x))
-		cFTp, cg = cFT |> x->(plan(x),Grid(x))
-		
-		rFTpᴴ = adjoint(rFTp) 
+		rFTplan, rg = rFT |> x->(plan(x),Grid(x))
+		cFTplan, cg = cFT |> x->(plan(x),Grid(x))
+		rFTplanᴴ = adjoint(rFTplan) 
+		cFTplanᴴ = adjoint(cFTplan) 
+
 		cF = zeros(Complex{Float64},prod(rg.nxi),prod(rg.nxi))
 		for i = 1:prod(rg.nxi)
 		    imls = zeros(Complex{Float64}, prod(rg.nxi))
 		    imls[i] = 1
-		    cF[:,i] = vec(cFTp * reshape(imls,rg.nxi))
+		    cF[:,i] = vec(cFTplan * reshape(imls,rg.nxi))
 		end
 		cFᴴ  = adjoint(cF)
 		cFᵀ  = transpose(cF)
@@ -65,7 +65,7 @@ let
 		kw = wavenumber(cFT)
 		Ck = 1 ./ (1 .+ abs.(kw) ./ 10)
 		# wnx = randn(rg.nxi...) ./ sqrt(rg.Ωx) # white noise
-		# wnk = rFTp * wnx
+		# wnk = rFTplan * wnx
 		# fk = sqrt.(Ck) .* wnk
 		δk₀ = 1/cg.Ωk
 		Σ2  = real.(cF⁻¹ * Diagonal(vec(Ck * δk₀)) * cF⁻ᴴ)
@@ -86,10 +86,10 @@ let
 		EZYᵀ2test  = fill(0.0im, prod(rg.nki), prod(rg.nki))
 		for (li,ci) ∈ zip(LI, CI)
 		    φ, iφ = rFFTimpulses(ci)
-		    EZXᵀ1test[:,li] = ve(rFTp * rex(Σ1 * ve(rFTpᴴ * φ)))
-		    EZYᵀ1test[:,li] = ve(rFTp * rex(Σ1 * ve(rFTpᴴ * iφ)))
-		    EZXᵀ2test[:,li] = ve(rFTp * rex(Σ2 * ve(rFTpᴴ * φ)))
-		    EZYᵀ2test[:,li] = ve(rFTp * rex(Σ2 * ve(rFTpᴴ * iφ)))
+		    EZXᵀ1test[:,li] = ve(rFTplan * rex(Σ1 * ve(rFTplanᴴ * φ)))
+		    EZYᵀ1test[:,li] = ve(rFTplan * rex(Σ1 * ve(rFTplanᴴ * iφ)))
+		    EZXᵀ2test[:,li] = ve(rFTplan * rex(Σ2 * ve(rFTplanᴴ * φ)))
+		    EZYᵀ2test[:,li] = ve(rFTplan * rex(Σ2 * ve(rFTplanᴴ * iφ)))
 		end
 
 		Σ1XX = real.(EZXᵀ1test)

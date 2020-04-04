@@ -35,7 +35,6 @@ end
 
 #%% op(f::F, g::F) for like types F<:XField
 for op in (:+, :-, :*)
-    #@eval $op(a::F, b::F) where {F<:XField} = F(map((a,b)->broadcast($op,a,b),fielddata(a),fielddata(b))...)
     @eval ($op)(a::F, b::F) where {F<:XField} = F(broadcast($op, fielddata(a),fielddata(b)))
 end
 

@@ -58,10 +58,11 @@ rΓ, rC, ΣXX, ΣYY, ΣYX, ΣXY = let
     rFFTimpulses, CI, LI, get_dual_ci = get_rFFTimpulses(rFT)
     EZXᵀ = fill(0.0im, length(fk_sim), length(fk_sim))
     EZYᵀ = fill(0.0im, length(fk_sim), length(fk_sim))
+    rFTplanᴴ = adjoint(rFTplan)
     for (li,ci) ∈ zip(LI, CI)
         φ, iφ = rFFTimpulses(ci)
-        EZXᵀ[:,li] = rFTplan * (Σₒ * (adjoint(rFTplan) * φ))
-        EZYᵀ[:,li] = rFTplan * (Σₒ * (adjoint(rFTplan) * iφ))
+        EZXᵀ[:,li] = rFTplan * (Σₒ * (rFTplanᴴ * φ))
+        EZYᵀ[:,li] = rFTplan * (Σₒ * (rFTplanᴴ * iφ))
     end
 
     ΣXX = real.(EZXᵀ)
