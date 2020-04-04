@@ -1,8 +1,8 @@
-#%% cFFT and cFFTunitary for full fft operations
+#%% cFFT and cFFTunitary are concrete subtypes of c2cTransforms
 #%% ============================================================
 
-struct cFFT{nᵢ,pᵢ,dnᵢ}        <: cFourierTransform{Float64,nᵢ,pᵢ,dnᵢ}  end
-struct cFFTunitary{nᵢ,pᵢ,dnᵢ} <: cFourierTransform{Float64,nᵢ,pᵢ,dnᵢ}  end
+struct cFFT{nᵢ,pᵢ,dnᵢ}        <: c2cFourierTransform{Float64,dnᵢ,nᵢ}  end
+struct cFFTunitary{nᵢ,pᵢ,dnᵢ} <: c2cFourierTransform{Float64,dnᵢ,nᵢ}  end
 
 #%% constructors
 function cFFT(;nᵢ, pᵢ=nothing, Δxᵢ=nothing) 
@@ -20,8 +20,12 @@ end
 (\)(::Type{F}, x::Array) where F<:Union{cFFT, cFFTunitary} = plan(F) \ x
 
 #%% used in fourier_transforms/plan's
-fft_mult(::Type{F}) where {nᵢ,pᵢ,dnᵢ,F<:cFFT{nᵢ,pᵢ,dnᵢ}}        = prod(Δx / √(2π) for Δx ∈ Grid(F).Δxi) 
-fft_mult(::Type{F}) where {nᵢ,pᵢ,dnᵢ,F<:cFFTunitary{nᵢ,pᵢ,dnᵢ}} = prod(1 / √(n) for n ∈ nᵢ) 
+function fft_mult(::Type{F}) where {nᵢ,pᵢ,dnᵢ,F<:cFFT{nᵢ,pᵢ,dnᵢ}}  
+    prod(Δx / √(2π) for Δx ∈ Grid(F).Δxi) 
+end
+function fft_mult(::Type{F}) where {nᵢ,pᵢ,dnᵢ,F<:cFFTunitary{nᵢ,pᵢ,dnᵢ}} 
+    prod(1 / √(n) for n ∈ nᵢ) 
+end 
 
 #%% specify the corresponding grid geometry
 @generated function Grid(::Type{F}) where {nᵢ,pᵢ,dnᵢ,F<:Union{cFFT{nᵢ,pᵢ,dnᵢ},cFFTunitary{nᵢ,pᵢ,dnᵢ}}}

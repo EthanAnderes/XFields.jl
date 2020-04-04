@@ -6,8 +6,8 @@
 
 let FT = rFFT(nᵢ=(256, 50), pᵢ=(1.0, 0.5))
 
-	fmap = rand(Bool, Grid(FT).nxi...) |> Smap{FT}
-	gfourier = rand(Bool, Grid(FT).nki...) |> Sfourier{FT}
+	fmap = rand(Bool, Grid(FT).nxi...) |> Rmap{FT}
+	gfourier = rand(Bool, Grid(FT).nki...) |> Rfourier{FT}
 
 	Dmap = DiagOp(fmap)
 	Dfourier = DiagOp(fmap)
@@ -64,30 +64,30 @@ end
 
 let FT = rFFT(nᵢ=(256, 50), pᵢ=(1.0, 0.5))
 
-	@inferred Smap{FT}()
-	@inferred Smap{FT}(0)
-	@inferred Sfourier{FT}()
-	@inferred Sfourier{FT}(0)
+	@inferred Rmap{FT}()
+	@inferred Rmap{FT}(0)
+	@inferred Rfourier{FT}()
+	@inferred Rfourier{FT}(0)
 
 	matx = rand(Bool, Grid(FT).nxi...)
 	matk = rand(Bool, Grid(FT).nki...)
 
-	@inferred Smap{FT}(matx)
-	@inferred Sfourier{FT}(matk)
+	@inferred Rmap{FT}(matx)
+	@inferred Rfourier{FT}(matk)
 
 end
 
 
 
-#%% Test using FT for converting between Smap and Sfourier
+#%% Test using FT for converting between Rmap and Rfourier
 #%% ------------------------------------------
 
 let FT = rFFT(nᵢ=(256, 50), pᵢ=(1.0, 0.5))
 	
 	matx = rand(Float64, Grid(FT).nxi...)
 	matk = FT*rand(Float64, Grid(FT).nxi...)
-	fx = matx |> Smap{FT}
-	fk = matk |> Sfourier{FT}
+	fx = matx |> Rmap{FT}
+	fk = matk |> Rfourier{FT}
 
 	@inferred FT * fx
 	@inferred FT * fk
@@ -125,10 +125,10 @@ xfulli = pixels(FT)
 fk = FT * rand(grid.nxi...)
 fx = FT \ rand(Complex{Float64}, grid.nki...)
 
-f1 = Smap{FT}(fx)
-f2 = Sfourier{FT}(fk)
-f4 = Sfourier{FT}(f1)
-f3 = Smap{FT}(f2)
+f1 = Rmap{FT}(fx)
+f2 = Rfourier{FT}(fk)
+f4 = Rfourier{FT}(f1)
+f3 = Rmap{FT}(f2)
 
 @test all(f1[!] .== FT_plan * fx)
 @test all(f1[:] .== fx)
@@ -174,11 +174,11 @@ xfulli = pixels(FT)
 fk = FT * rand(grid.nxi...)
 fx = FT \ rand(Complex{Float64}, grid.nki...)
 
-f1 = Smap{FT}(fx)
-f2 = Sfourier{FT}(fk)
+f1 = Rmap{FT}(fx)
+f2 = Rfourier{FT}(fk)
 
-f4 = Sfourier{FT}(f1)
-f3 = Smap{FT}(f2)
+f4 = Rfourier{FT}(f1)
+f3 = Rmap{FT}(f2)
 
 f1 + f2
 - 2 * f2
@@ -273,10 +273,10 @@ grid = Grid(FFT)
 fk = FFT * randn(nᵢ...)
 fx = FFT \ randn(Complex{Float64}, grid.nki...)
 
-f1 = Smap{FFT}(fx)
-f2 = Sfourier{FFT}(fk)
-f4 = Sfourier{FFT}(f1)
-f3 = Smap{FFT}(f2)
+f1 = Rmap{FFT}(fx)
+f2 = Rfourier{FFT}(fk)
+f4 = Rfourier{FFT}(f1)
+f3 = Rmap{FFT}(f2)
 
 @inferred f1 + f2
 @inferred - 2 * f2
@@ -316,10 +316,10 @@ grid = Grid(FFT)
 fk = FFT * rand(nᵢ...)
 fx = FFT \ rand(Complex{Float64}, grid.nki...)
 
-f1 = Smap{FFT}(fx)
-f2 = Sfourier{FFT}(fk)
-f4 = Sfourier{FFT}(f1)
-f3 = Smap{FFT}(f2)
+f1 = Rmap{FFT}(fx)
+f2 = Rfourier{FFT}(fk)
+f4 = Rfourier{FFT}(f1)
+f3 = Rmap{FFT}(f2)
 
 @inferred f1 + f2
 @inferred - 2 * f2

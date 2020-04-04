@@ -1,8 +1,8 @@
-#%% rFFT and rFFTunitary for real fft operations
+#%% rFFT and rFFTunitary are concrete subtypes of c2cTransforms
 #%% ============================================================
 
-struct rFFT{nᵢ,pᵢ,dnᵢ}        <: rFourierTransform{Float64,nᵢ,pᵢ,dnᵢ}  end
-struct rFFTunitary{nᵢ,pᵢ,dnᵢ} <: rFourierTransform{Float64,nᵢ,pᵢ,dnᵢ}  end
+struct rFFT{nᵢ,pᵢ,dnᵢ}        <: r2cFourierTransform{Float64,dnᵢ,nᵢ}  end
+struct rFFTunitary{nᵢ,pᵢ,dnᵢ} <: r2cFourierTransform{Float64,dnᵢ,nᵢ}  end
 
 #%% constructors
 #%% TODO generalize Float64 to T<:Real
@@ -21,8 +21,12 @@ end
 (\)(::Type{F}, x::Array) where F<:Union{rFFT, rFFTunitary} = plan(F) \ x
 
 #%% used in fourier_transforms/plan's
-fft_mult(::Type{F}) where {nᵢ,pᵢ,dnᵢ,F<:rFFT{nᵢ,pᵢ,dnᵢ}}         = prod(Δx / √(2π) for Δx ∈ Grid(F).Δxi) 
-fft_mult(::Type{F}) where {nᵢ,pᵢ,dnᵢ,F<:rFFTunitary{nᵢ,pᵢ,dnᵢ}}  = prod(1 / √(n) for n ∈ nᵢ) 
+function fft_mult(::Type{F}) where {nᵢ,pᵢ,dnᵢ,F<:rFFT{nᵢ,pᵢ,dnᵢ}} 
+    prod(Δx / √(2π) for Δx ∈ Grid(F).Δxi) 
+end
+function fft_mult(::Type{F}) where {nᵢ,pᵢ,dnᵢ,F<:rFFTunitary{nᵢ,pᵢ,dnᵢ}} 
+    prod(1 / √(n) for n ∈ nᵢ) 
+end
 
 #%% specify the corresponding grid geometry
 @generated function Grid(::Type{F}) where {nᵢ,pᵢ,dnᵢ,F<:Union{rFFT{nᵢ,pᵢ,dnᵢ},rFFTunitary{nᵢ,pᵢ,dnᵢ}}}

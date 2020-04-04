@@ -71,18 +71,18 @@ end
 XFields.Grid(::Type{ST}) where {nᵢ,pᵢ,ST<:S0S2transform{nᵢ,pᵢ}} = XFields.Grid(rFFT(ST))
 
 
-#%% Specialized constructors for Smap{ST} and Sfourier{ST}
+#%% Specialized constructors for Rmap{ST} and Sfourier{ST}
 #%% ---------------------------------------------------------------
 
-Smap{ST}(x::AA{2}) where {ST<:S0S2transform} = Smap{ST,3}(cat(x,x,x,dims=3))
-Smap{ST}(x1::AA{2}, x2::AA{2}, x3::AA{2}) where {ST<:S0S2transform} = Smap{ST,3}(cat(x1,x2,x3,dims=3))
-Smap{ST}() where {ST<:S0S2transform}  = Smap{ST,3}(zeros(F64, Grid(ST).nxi...,3))
-function Smap{ST}(n1, n2, n3) where {ST<:S0S2transform} 
+Rmap{ST}(x::AA{2}) where {ST<:S0S2transform} = Rmap{ST,3}(cat(x,x,x,dims=3))
+Rmap{ST}(x1::AA{2}, x2::AA{2}, x3::AA{2}) where {ST<:S0S2transform} = Rmap{ST,3}(cat(x1,x2,x3,dims=3))
+Rmap{ST}() where {ST<:S0S2transform}  = Rmap{ST,3}(zeros(F64, Grid(ST).nxi...,3))
+function Rmap{ST}(n1, n2, n3) where {ST<:S0S2transform} 
     ons = fill(F64(1), Grid(ST).nxi...)
     mn1 = n1 .* ons
     mn2 = n2 .* ons
     mn3 = n3 .* ons
-    return Smap{ST,3}(cat(mn1,mn2,mn3,dims=3))
+    return Rmap{ST,3}(cat(mn1,mn2,mn3,dims=3))
 end
 
 Sfourier{ST}(x::AA{2}) where {ST<:S0S2transform} = Sfourier{ST,3}(cat(x,x,x,dims=3))
@@ -103,16 +103,16 @@ end
 #%% ---------------------------------------------------------------
 
 function Base.getindex(f::Sfield{ST}, sym::Symbol) where {nᵢ,pᵢ,ST<:S0S2transform{nᵢ,pᵢ}}
-    (sym == :Ix) ?      Smap{ST}(f).x[:,:,1] :
+    (sym == :Ix) ?      Rmap{ST}(f).x[:,:,1] :
     (sym == :Il) ?      Sfourier{ST}(f).k[:,:,1] :
     (sym == :Ex) ? rFFT{nᵢ,pᵢ,2} \ Sfourier{ST}(f).k[:,:,2] :
     (sym == :El) ?      Sfourier{ST}(f).k[:,:,2] :
     (sym == :Bx) ? rFFT{nᵢ,pᵢ,2} \ Sfourier{ST}(f).k[:,:,3] :
     (sym == :Bl) ?      Sfourier{ST}(f).k[:,:,3] :
-    (sym == :Qx) ?      Smap{ST}(f).x[:,:,2] :
-    (sym == :Ql) ? rFFT{nᵢ,pᵢ,2} * Smap{ST}(f).x[:,:,2] :
-    (sym == :Ux) ?      Smap{ST}(f).x[:,:,3] :
-    (sym == :Ul) ? rFFT{nᵢ,pᵢ,2} * Smap{ST}(f).x[:,:,3] :
+    (sym == :Qx) ?      Rmap{ST}(f).x[:,:,2] :
+    (sym == :Ql) ? rFFT{nᵢ,pᵢ,2} * Rmap{ST}(f).x[:,:,2] :
+    (sym == :Ux) ?      Rmap{ST}(f).x[:,:,3] :
+    (sym == :Ul) ? rFFT{nᵢ,pᵢ,2} * Rmap{ST}(f).x[:,:,3] :
     error("index is not defined")
 end
 

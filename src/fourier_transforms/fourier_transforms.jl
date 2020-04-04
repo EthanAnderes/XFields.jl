@@ -1,56 +1,44 @@
-#%% Transform types
-#%% ============================================================
 
-abstract type Transform end
-
-# nᵢ ≡ number of grid evaluations to a side
-# pᵢ ≡ period (e.g. grid evals at {0, pᵢ/nᵢ, pᵢ2/nᵢ, …, pᵢ(nᵢ-1)/nᵢ})
-abstract type FourierTransform{T,nᵢ,pᵢ,dnᵢ}  <: Transform end
-abstract type rFourierTransform{T<:Real,nᵢ,pᵢ,dnᵢ} <: FourierTransform{T,nᵢ,pᵢ,dnᵢ} end
-abstract type cFourierTransform{T<:Real,nᵢ,pᵢ,dnᵢ} <: FourierTransform{T,nᵢ,pᵢ,dnᵢ} end
-
-# Note: using these aliases to allow reveral of order dnᵢ <-> nᵢ
-rFT{T,dnᵢ,nᵢ} = rFourierTransform{T,nᵢ,pᵢ,dnᵢ} where {pᵢ} 
-cFT{T,dnᵢ,nᵢ} = cFourierTransform{T,nᵢ,pᵢ,dnᵢ} where {pᵢ} 
-FT{T,dnᵢ,nᵢ}  = FourierTransform{T,nᵢ,pᵢ,dnᵢ} where {pᵢ}
+#%% abstract Fourier transform types which contain enough information
+#%% to allow plans to be generated (modulo the constant multiplier)
+#%% ==================================================================
+abstract type r2cFourierTransform{T<:Real,dnᵢ,nᵢ}  <: r2cTransform{T,dnᵢ,nᵢ} end
+abstract type c2cFourierTransform{T<:Real,dnᵢ,nᵢ}  <: c2cTransform{T,dnᵢ,nᵢ} end
+FourierTransform{T,dnᵢ,nᵢ} = Union{r2cFourierTransform{T,dnᵢ,nᵢ},c2cFourierTransform{T,dnᵢ,nᵢ}}
 
 
-#  This allows broadcasting an fft plan to slices indexed by trailing dimensions
-#  note: tᵢ <: NTuple{dtᵢ,Int}
-abstract type LastDimSize{tᵢ,dtᵢ} end
-LDimS{dtᵢ} = LastDimSize{tᵢ,dtᵢ} where {tᵢ}
-
+#%% fallback default fft_mult used in the plan
+#%% ==================================================================
+fft_mult(::Type{F}) where F<:FourierTransform = 1
 
 
 #%% Low level container for forward/backward plans and normalization
-#%% -------------------------------------------------------------
+#%% ==================================================================
 #%% Instances of these containers know how to mult and divide
 
-
-# Here we 
-struct rFFTholder{T<:Real,dnᵢdtᵢ}
-    FT::FFTW.rFFTWPlan{T,-1,false,dnᵢdtᵢ}
-    IFT::FFTW.rFFTWPlan{Complex{T},1,false,dnᵢdtᵢ}
+struct rFFTholder{T<:Real,d}
+    FT::FFTW.rFFTWPlan{T,-1,false,d}
+    IFT::FFTW.rFFTWPlan{Complex{T},1,false,d}
     normalize_FT::T
     normalize_IFT::T
 end
-struct Adjoint_rFFTholder{T<:Real,dnᵢdtᵢ}
-    FT::FFTW.rFFTWPlan{T,-1,false,dnᵢdtᵢ}
-    IFT::FFTW.rFFTWPlan{Complex{T},1,false,dnᵢdtᵢ}
+struct Adjoint_rFFTholder{T<:Real,d}
+    FT::FFTW.rFFTWPlan{T,-1,false,d}
+    IFT::FFTW.rFFTWPlan{Complex{T},1,false,d}
     normalize_FT::T
     normalize_IFT::T
 end
 
 
-struct cFFTholder{T<:Real,dnᵢdtᵢ} # dnᵢdtᵢ is the total dimension of the array it operates on
-    FT::FFTW.cFFTWPlan{Complex{T},-1,false,dnᵢdtᵢ}
-    IFT::FFTW.cFFTWPlan{Complex{T},1,false,dnᵢdtᵢ}
+struct cFFTholder{T<:Real,d} # d is the total dimension of the array it operates on
+    FT::FFTW.cFFTWPlan{Complex{T},-1,false,d}
+    IFT::FFTW.cFFTWPlan{Complex{T},1,false,d}
     normalize_FT::T
     normalize_IFT::T
 end
-struct Adjoint_cFFTholder{T<:Real,dnᵢdtᵢ} # dnᵢdtᵢ is the total dimension of the array it operates on
-    FT::FFTW.cFFTWPlan{Complex{T},-1,false,dnᵢdtᵢ}
-    IFT::FFTW.cFFTWPlan{Complex{T},1,false,dnᵢdtᵢ}
+struct Adjoint_cFFTholder{T<:Real,d} # d is the total dimension of the array it operates on
+    FT::FFTW.cFFTWPlan{Complex{T},-1,false,d}
+    IFT::FFTW.cFFTWPlan{Complex{T},1,false,d}
     normalize_FT::T
     normalize_IFT::T
 end
@@ -65,20 +53,19 @@ end
 (\)(p::Adjoint_rFFTholder, x::Array) = p.normalize_IFT .* (p.FT * x) 
 (\)(p::Adjoint_cFFTholder, x::Array) = p.normalize_IFT .* (p.FT * x) 
 
-
-
-adjoint(p::rFFTholder{T,dnᵢdtᵢ}) where {T,dnᵢdtᵢ} = Adjoint_rFFTholder{T,dnᵢdtᵢ}(p.FT,p.IFT,p.normalize_FT,p.normalize_IFT)
-adjoint(p::cFFTholder{T,dnᵢdtᵢ}) where {T,dnᵢdtᵢ} = Adjoint_cFFTholder{T,dnᵢdtᵢ}(p.FT,p.IFT,p.normalize_FT,p.normalize_IFT)
+adjoint(p::rFFTholder{T,d}) where {T,d} = Adjoint_rFFTholder{T,d}(p.FT,p.IFT,p.normalize_FT,p.normalize_IFT)
+adjoint(p::cFFTholder{T,d}) where {T,d} = Adjoint_cFFTholder{T,d}(p.FT,p.IFT,p.normalize_FT,p.normalize_IFT)
 
 transpose(p::rFFTholder) = p
 transpose(p::cFFTholder) = p
 
 
-#%% Plans (TODO: get rid of the allocation for the planned ffts)
-#%% -------------------------------------------------------------
- 
+#%% Plans constructed from FourierTransform types
+#%% ==================================================================
 
-@generated function rplan(::Type{F}, ::Type{L}) where {T,nᵢ,dnᵢ,tᵢ,dtᵢ,F<:FT{T,dnᵢ,nᵢ},L<:LastDimSize{tᵢ,dtᵢ}}
+abstract type LastDimSize{tᵢ,dtᵢ} end
+
+@generated function rplan(::Type{F}, ::Type{L}) where {T<:Real,dnᵢ,dtᵢ,nᵢ,tᵢ,F<:FourierTransform{T,dnᵢ,nᵢ},L<:LastDimSize{tᵢ,dtᵢ}}
     region = 1:dnᵢ
     nᵢtᵢ    = tuple(nᵢ... ,tᵢ...)
     dnᵢdtᵢ = dnᵢ+dtᵢ
@@ -94,12 +81,7 @@ transpose(p::cFFTholder) = p
     return rFFTholder{T,dnᵢdtᵢ}(FT,IFT,normalize_FT,normalize_IFT)
 end
 
-function rplan(::Type{F}) where {F<:FT}
-    rplan(F, LastDimSize{(),0})
-end
-
-
-@generated function cplan(::Type{F}, ::Type{L}) where {T,nᵢ,dnᵢ,tᵢ,dtᵢ,F<:FT{T,dnᵢ,nᵢ},L<:LastDimSize{tᵢ,dtᵢ}}
+@generated function cplan(::Type{F}, ::Type{L}) where {T<:Real,dnᵢ,dtᵢ,nᵢ,tᵢ,F<:FourierTransform{T,dnᵢ,nᵢ},L<:LastDimSize{tᵢ,dtᵢ}}
     region = 1:dnᵢ
     nᵢtᵢ    = tuple(nᵢ... ,tᵢ...)
     dnᵢdtᵢ = dnᵢ+dtᵢ
@@ -115,23 +97,20 @@ end
     return cFFTholder{T,dnᵢdtᵢ}(FT,IFT,normalize_FT,normalize_IFT)
 end
 
-function cplan(::Type{F}) where {F<:FT}
+function rplan(::Type{F}) where {T<:Real,dnᵢ,nᵢ,F<:FourierTransform{T,dnᵢ,nᵢ}}
+    rplan(F, LastDimSize{(),0})
+end
+
+function cplan(::Type{F}) where {T<:Real,dnᵢ,nᵢ,F<:FourierTransform{T,dnᵢ,nᵢ}}
     cplan(F, LastDimSize{(),0})
 end
 
+plan(::Type{F}, ::Type{L}) where {F<:r2cFourierTransform, L<:LastDimSize} = rplan(F,L)
+plan(::Type{F}, ::Type{L}) where {F<:c2cFourierTransform, L<:LastDimSize} = cplan(F,L)
 
-plan(::Type{F}, ::Type{L}) where {F<:rFT, L<:LastDimSize} = rplan(F,L)
-plan(::Type{F}, ::Type{L}) where {F<:cFT, L<:LastDimSize} = cplan(F,L)
+plan(::Type{F}) where {F<:r2cFourierTransform} = rplan(F)
+plan(::Type{F}) where {F<:c2cFourierTransform} = cplan(F)
 
-plan(::Type{F}) where {F<:rFT} = rplan(F)
-plan(::Type{F}) where {F<:cFT} = cplan(F)
-
-
-
-#%% fallback default fft_mult used in the plan
-#%% -------------------------------------------------------------
-
-fft_mult(::Type{F}) where F<:FourierTransform = 1
 
 #%% Grid struct ... container for grid information of F<:FourierTransform{nᵢ,pᵢ,d}
 #%% ============================================================
@@ -151,7 +130,7 @@ struct Grid{T,nᵢ,pᵢ,dnᵢ}
     d::Int # == dnᵢ
 end
 
-function wavenumber(::Type{F}) where {T,d,F<:FT{T,d}}
+function wavenumber(::Type{F}) where {T,d,F<:FourierTransform{T,d}}
     g = Grid(F)
     λ = zeros(T, g.nki)
     for I ∈ CartesianIndices(λ)
@@ -160,7 +139,7 @@ function wavenumber(::Type{F}) where {T,d,F<:FT{T,d}}
     λ
 end
 
-function frequencies(::Type{F}, i::Int) where {T,d,F<:FT{T,d}}
+function frequencies(::Type{F}, i::Int) where {T,d,F<:FourierTransform{T,d}}
     g = Grid(F)
     kifull = zeros(T, g.nki)
     for I ∈ CartesianIndices(kifull)
@@ -169,12 +148,12 @@ function frequencies(::Type{F}, i::Int) where {T,d,F<:FT{T,d}}
     kifull
 end
 
-function frequencies(::Type{F}) where {T,d,F<:FT{T,d}}
+function frequencies(::Type{F}) where {T,d,F<:FourierTransform{T,d}}
     g = Grid(F) 
     map(i->frequencies(F,i), tuple(1:d...))::NTuple{d,Array{T,d}}
 end
 
-function pixels(::Type{F}, i::Int) where {T,d,F<:FT{T,d}}
+function pixels(::Type{F}, i::Int) where {T,d,F<:FourierTransform{T,d}}
     g = Grid(F)
     xifull = zeros(T, g.nxi)
     for I ∈ CartesianIndices(xifull)
@@ -183,7 +162,7 @@ function pixels(::Type{F}, i::Int) where {T,d,F<:FT{T,d}}
     xifull
 end
 
-function pixels(::Type{F})  where {T,d,F<:FT{T,d}}
+function pixels(::Type{F})  where {T,d,F<:FourierTransform{T,d}}
     g = Grid(F) 
     map(i->pixels(F,i), tuple(1:d...))::NTuple{d,Array{T,d}}
 end
@@ -224,3 +203,4 @@ function _fft_output_index_2_freq(ind, nside, period)
     return  ifelse(kpre <= nyq, kpre, kpre - 2nyq) # option 1
     # return ifelse(kpre < nyq, kpre, kpre - 2nyq)  # option 2
 end
+#
