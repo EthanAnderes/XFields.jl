@@ -1,10 +1,11 @@
 #%% rFFT and rFFTunitary for real fft operations
 #%% ============================================================
 
-struct rFFT{nᵢ,pᵢ,d}        <: rFourierTransform{nᵢ,pᵢ,d}  end
-struct rFFTunitary{nᵢ,pᵢ,d} <: rFourierTransform{nᵢ,pᵢ,d}  end
+struct rFFT{nᵢ,pᵢ,dnᵢ}        <: rFourierTransform{Float64,nᵢ,pᵢ,dnᵢ}  end
+struct rFFTunitary{nᵢ,pᵢ,dnᵢ} <: rFourierTransform{Float64,nᵢ,pᵢ,dnᵢ}  end
 
 #%% constructors
+#%% TODO generalize Float64 to T<:Real
 function rFFT(;nᵢ, pᵢ=nothing, Δxᵢ=nothing) 
     nᵢ,pᵢ,d = _get_npd(;nᵢ=nᵢ, pᵢ=pᵢ, Δxᵢ=Δxᵢ)
     rFFT{nᵢ,pᵢ,d}
@@ -14,17 +15,18 @@ function rFFTunitary(;nᵢ, pᵢ=nothing, Δxᵢ=nothing)
     rFFTunitary{nᵢ,pᵢ,d}
 end
 
+
 #%% basic functionality
-(*)(::Type{FT}, x::Array) where FT<:Union{rFFT, rFFTunitary} = plan(FT) * x
-(\)(::Type{FT}, x::Array) where FT<:Union{rFFT, rFFTunitary} = plan(FT) \ x
+(*)(::Type{F}, x::Array) where F<:Union{rFFT, rFFTunitary} = plan(F) * x
+(\)(::Type{F}, x::Array) where F<:Union{rFFT, rFFTunitary} = plan(F) \ x
 
 #%% used in fourier_transforms/plan's
-fft_mult(::Type{FT}) where FT<:rFFT{nᵢ,pᵢ,d}        where {nᵢ,pᵢ,d} = prod(Δx / √(2π) for Δx ∈ Grid(FT).Δxi) 
-fft_mult(::Type{FT}) where FT<:rFFTunitary{nᵢ,pᵢ,d} where {nᵢ,pᵢ,d} = prod(1 / √(n) for n ∈ nᵢ) 
+fft_mult(::Type{F}) where {nᵢ,pᵢ,dnᵢ,F<:rFFT{nᵢ,pᵢ,dnᵢ}}         = prod(Δx / √(2π) for Δx ∈ Grid(F).Δxi) 
+fft_mult(::Type{F}) where {nᵢ,pᵢ,dnᵢ,F<:rFFTunitary{nᵢ,pᵢ,dnᵢ}}  = prod(1 / √(n) for n ∈ nᵢ) 
 
 #%% specify the corresponding grid geometry
-@generated function Grid(::Type{F}) where F<:Union{rFFT{nᵢ,pᵢ,d},rFFTunitary{nᵢ,pᵢ,d}} where {nᵢ,pᵢ,d}
-    y = map(nᵢ, pᵢ, 1:d) do n, p, i
+@generated function Grid(::Type{F}) where {nᵢ,pᵢ,dnᵢ,F<:Union{rFFT{nᵢ,pᵢ,dnᵢ},rFFTunitary{nᵢ,pᵢ,dnᵢ}}}
+    y = map(nᵢ, pᵢ, 1:dnᵢ) do n, p, i
         Δx     = p/n
         Δk     = 2π/p
         nyq    = 2π/(2Δx)
@@ -42,27 +44,27 @@ fft_mult(::Type{FT}) where FT<:rFFTunitary{nᵢ,pᵢ,d} where {nᵢ,pᵢ,d} = pr
     Ωx      = prod(Δxi)
     nxi     = nᵢ
     nki     = map(length, ki)
-    return Grid{nᵢ,pᵢ,d}(Δxi, Δki, xi, ki, nyqi, Ωx, Ωk, nki, nxi, pᵢ, d)
+    return Grid{Float64,nᵢ,pᵢ,dnᵢ}(Δxi, Δki, xi, ki, nyqi, Ωx, Ωk, nki, nxi, pᵢ, dnᵢ)
 end
  
 #%% Used for constructing the covariance matrix of a subset of frequencies
-function get_rFFTimpulses(::Type{rFT}) where {nᵢ,pᵢ,dim,rFT<:rFourierTransform{nᵢ,pᵢ,dim}} 
-    rg = Grid(rFT)
-    CI = CartesianIndices(Base.OneTo.(rg.nki))
-    LI = LinearIndices(Base.OneTo.(rg.nki))
+function get_rFFTimpulses(::Type{F}) where {nᵢ,pᵢ,dnᵢ,F<:Union{rFFT{nᵢ,pᵢ,dnᵢ},rFFTunitary{nᵢ,pᵢ,dnᵢ}}}
+    g  = Grid(F)
+    CI = CartesianIndices(Base.OneTo.(g.nki))
+    LI = LinearIndices(Base.OneTo.(g.nki))
 
     function _get_dual_k(k,n) 
         dk = n-k+2
         mod1(dk,n)
     end 
 
-    function get_dual_ci(ci::CartesianIndex{dim}) 
-        return CartesianIndex(map(_get_dual_k, ci.I, rg.nxi))
+    function get_dual_ci(ci::CartesianIndex{dnᵢ}) 
+        return CartesianIndex(map(_get_dual_k, ci.I, g.nxi))
     end 
 
-    function rFFTimpulses(ci::CartesianIndex{dim})
-        rimpls = zeros(Complex{Float64}, rg.nki...)
-        cimpls = zeros(Complex{Float64}, rg.nki...)
+    function rFFTimpulses(ci::CartesianIndex{dnᵢ})
+        rimpls = zeros(Complex{Float64}, g.nki...)
+        cimpls = zeros(Complex{Float64}, g.nki...)
         dual_ci = get_dual_ci(ci)
         if (ci==first(CI)) || (ci==dual_ci)
             rimpls[ci]  = 1
