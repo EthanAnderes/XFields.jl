@@ -110,8 +110,8 @@ end
 ##======================================================
 pᵢ  = (1.0, 0.5) # periods
 nᵢ   = (256, 256) # number of samples (left endpoint included)
-FT  = rFFT{nᵢ,pᵢ,length(nᵢ)}
-UFT = rFFTunitary{nᵢ,pᵢ,length(nᵢ)}
+FT  = rFFT{Float32,nᵢ,pᵢ,length(nᵢ)}
+UFT = rFFTunitary{Float32,nᵢ,pᵢ,length(nᵢ)}
 
 FT_plan = plan(FT)
 UFT_plan = plan(UFT)
@@ -123,7 +123,7 @@ kfulli = frequencies(FT)
 xfulli = pixels(FT) 
 
 fk = FT * rand(grid.nxi...)
-fx = FT \ rand(Complex{Float64}, grid.nki...)
+fx = FT \ rand(Complex{Float32}, grid.nki...)
 
 f1 = Rmap{FT}(fx)
 f2 = Rfourier{FT}(fk)
@@ -164,7 +164,7 @@ L2 * L1
 ##======================================================
 pᵢ  = (1.0,) 
 nᵢ   = (256,)
-FT  = rFFT{nᵢ,pᵢ,length(nᵢ)}
+FT  = rFFT{Float64,nᵢ,pᵢ,length(nᵢ)}
 
 grid   = Grid(FT)
 λ      = wavenumber(FT)
@@ -194,10 +194,10 @@ nᵢ  = (256, 50) # number of samples (left endpoint included)
 pᵢ  = (1.0, 0.5) # periods
 Δxᵢ = tuple((pn[1]/pn[2] for pn in zip(pᵢ,nᵢ))...)
 
-FFT1 = rFFT{nᵢ,pᵢ,length(nᵢ)}
+FFT1 = rFFT{Float64,nᵢ,pᵢ,length(nᵢ)}
 FFT2 = rFFT(nᵢ=nᵢ, pᵢ=pᵢ)
 FFT3 = rFFT(nᵢ=nᵢ, Δxᵢ=Δxᵢ)
-FFTu1 = rFFTunitary{nᵢ,pᵢ,length(nᵢ)}
+FFTu1 = rFFTunitary{Float64,nᵢ,pᵢ,length(nᵢ)}
 FFTu2 = rFFTunitary(nᵢ=nᵢ, pᵢ=pᵢ)
 FFTu3 = rFFTunitary(nᵢ=nᵢ, Δxᵢ=Δxᵢ)
 
@@ -220,10 +220,10 @@ gridu3 = Grid(FFTu3)
 
 pᵢ  = (1.0, 0.5) # periods
 nᵢ   = (256, 256) # number of samples (left endpoint included)
-cFT  = cFFT{nᵢ,pᵢ,length(nᵢ)}
-cUFT  = cFFTunitary{nᵢ,pᵢ,length(nᵢ)}
-rFT  = rFFT{nᵢ,pᵢ,length(nᵢ)}
-rUFT  = rFFTunitary{nᵢ,pᵢ,length(nᵢ)}
+cFT  = cFFT{Float64,nᵢ,pᵢ,length(nᵢ)}
+cUFT  = cFFTunitary{Float64,nᵢ,pᵢ,length(nᵢ)}
+rFT  = rFFT{Float64,nᵢ,pᵢ,length(nᵢ)}
+rUFT  = rFFTunitary{Float64,nᵢ,pᵢ,length(nᵢ)}
 
 grid = Grid(cFT)
 
@@ -261,8 +261,8 @@ rfx = rand(Float64, grid.nxi...)
 
 pᵢ  = (1.0, 3.5) # periods
 nᵢ   = (64,64) # number of samples (left endpoint included)
-FFT  = rFFT{nᵢ,pᵢ,length(nᵢ)}
-UFT  = rFFTunitary{nᵢ,pᵢ,length(nᵢ)}
+FFT  = rFFT{Float64,nᵢ,pᵢ,length(nᵢ)}
+UFT  = rFFTunitary{Float64,nᵢ,pᵢ,length(nᵢ)}
 grid = Grid(FFT)
 
 @inferred Grid(FFT)
@@ -303,8 +303,8 @@ end
 
 pᵢ  = (1.0,) 
 nᵢ   = (64,)
-FFT  = rFFT{nᵢ,pᵢ,length(nᵢ)}
-UFT  = rFFTunitary{nᵢ,pᵢ,length(nᵢ)}
+FFT  = rFFT{Float64,nᵢ,pᵢ,length(nᵢ)}
+UFT  = rFFTunitary{Float64,nᵢ,pᵢ,length(nᵢ)}
 grid = Grid(FFT)
 
 @inferred Grid(FFT)
