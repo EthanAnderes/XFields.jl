@@ -2,9 +2,19 @@
 #%% abstract Fourier transform types which contain enough information
 #%% to allow plans to be generated (modulo the constant multiplier)
 #%% ==================================================================
-abstract type r2cFourierTransform{T<:Real,dnᵢ,nᵢ}  <: r2cTransform{T,dnᵢ,nᵢ} end
-abstract type c2cFourierTransform{T<:Real,dnᵢ,nᵢ}  <: c2cTransform{T,dnᵢ,nᵢ} end
+abstract type r2cFourierTransform{T<:Real,dnᵢ,nᵢ}  <: r2cTransform{T,dnᵢ} end
+abstract type c2cFourierTransform{T<:Real,dnᵢ,nᵢ}  <: c2cTransform{T,dnᵢ} end
 FourierTransform{T,dnᵢ,nᵢ} = Union{r2cFourierTransform{T,dnᵢ,nᵢ},c2cFourierTransform{T,dnᵢ,nᵢ}}
+
+# constructors and methods developed in rFFT.jl
+struct rFFT{T<:Real,nᵢ,pᵢ,dnᵢ}        <: r2cFourierTransform{T,dnᵢ,nᵢ}  end
+struct rFFTunitary{T<:Real,nᵢ,pᵢ,dnᵢ} <: r2cFourierTransform{T,dnᵢ,nᵢ}  end
+rFFTgeneric{T,nᵢ,pᵢ,dnᵢ} = Union{rFFT{T,nᵢ,pᵢ,dnᵢ},rFFTunitary{T,nᵢ,pᵢ,dnᵢ}}
+
+# constructors and methods developed in cFFT.jl
+struct cFFT{T<:Real,nᵢ,pᵢ,dnᵢ}        <: c2cFourierTransform{T,dnᵢ,nᵢ}  end
+struct cFFTunitary{T<:Real,nᵢ,pᵢ,dnᵢ} <: c2cFourierTransform{T,dnᵢ,nᵢ}  end
+cFFTgeneric{T,nᵢ,pᵢ,dnᵢ} = Union{cFFT{T,nᵢ,pᵢ,dnᵢ},cFFTunitary{T,nᵢ,pᵢ,dnᵢ}}
 
 
 #%% fallback default fft_mult used in the plan
@@ -65,7 +75,7 @@ transpose(p::cFFTholder) = p
 
 abstract type LastDimSize{tᵢ,dtᵢ} end
 
-@generated function rplan(::Type{F}, ::Type{L}) where {T<:Real,dnᵢ,dtᵢ,nᵢ,tᵢ,F<:FourierTransform{T,dnᵢ,nᵢ},L<:LastDimSize{tᵢ,dtᵢ}}
+@generated function rplan(::Type{F}, ::Type{<:LastDimSize{tᵢ,dtᵢ}}) where {T<:Real,dnᵢ,dtᵢ,nᵢ,tᵢ,F<:FourierTransform{T,dnᵢ,nᵢ}}
     region = 1:dnᵢ
     nᵢtᵢ    = tuple(nᵢ... ,tᵢ...)
     dnᵢdtᵢ = dnᵢ+dtᵢ
@@ -81,7 +91,7 @@ abstract type LastDimSize{tᵢ,dtᵢ} end
     return rFFTholder{T,dnᵢdtᵢ}(FT,IFT,normalize_FT,normalize_IFT)
 end
 
-@generated function cplan(::Type{F}, ::Type{L}) where {T<:Real,dnᵢ,dtᵢ,nᵢ,tᵢ,F<:FourierTransform{T,dnᵢ,nᵢ},L<:LastDimSize{tᵢ,dtᵢ}}
+@generated function cplan(::Type{F}, ::Type{<:LastDimSize{tᵢ,dtᵢ}}) where {T<:Real,dnᵢ,dtᵢ,nᵢ,tᵢ,F<:FourierTransform{T,dnᵢ,nᵢ}}
     region = 1:dnᵢ
     nᵢtᵢ    = tuple(nᵢ... ,tᵢ...)
     dnᵢdtᵢ = dnᵢ+dtᵢ

@@ -1,9 +1,6 @@
 #%% cFFT and cFFTunitary are concrete subtypes of c2cTransforms
 #%% ============================================================
 
-struct cFFT{T<:Real,nᵢ,pᵢ,dnᵢ}        <: c2cFourierTransform{T,dnᵢ,nᵢ}  end
-struct cFFTunitary{T<:Real,nᵢ,pᵢ,dnᵢ} <: c2cFourierTransform{T,dnᵢ,nᵢ}  end
-
 #%% constructors
 function cFFT(::Type{T}=Float64; nᵢ, pᵢ=nothing, Δxᵢ=nothing) where {T<:Real}
     nᵢ,pᵢ′,d = _get_npd(;nᵢ=nᵢ, pᵢ=pᵢ, Δxᵢ=Δxᵢ)
@@ -18,8 +15,8 @@ end
 
 
 #%% basic functionality
-(*)(::Type{F}, x::Array) where F<:Union{cFFT, cFFTunitary} = plan(F) * x
-(\)(::Type{F}, x::Array) where F<:Union{cFFT, cFFTunitary} = plan(F) \ x
+(*)(::Type{F}, x::Array) where F<:cFFTgeneric = plan(F) * x
+(\)(::Type{F}, x::Array) where F<:cFFTgeneric = plan(F) \ x
 
 #%% used in fourier_transforms/plan's
 function fft_mult(::Type{F}) where {T<:Real,nᵢ,pᵢ,dnᵢ,F<:cFFT{T,nᵢ,pᵢ,dnᵢ}}  
@@ -30,7 +27,7 @@ function fft_mult(::Type{F}) where {T<:Real,nᵢ,pᵢ,dnᵢ,F<:cFFTunitary{T,n�
 end 
 
 #%% specify the corresponding grid geometry
-@generated function Grid(::Type{F}) where {T<:Real,nᵢ,pᵢ,dnᵢ,F<:Union{cFFT{T,nᵢ,pᵢ,dnᵢ},cFFTunitary{T,nᵢ,pᵢ,dnᵢ}}}
+@generated function Grid(::Type{<:cFFTgeneric{T,nᵢ,pᵢ,dnᵢ}}) where {T,nᵢ,pᵢ,dnᵢ}
     y = map(nᵢ, pᵢ, 1:dnᵢ) do n, p, i
         Δx     = p/n
         Δk     = 2π/p

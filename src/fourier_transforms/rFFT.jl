@@ -1,9 +1,6 @@
 #%% rFFT and rFFTunitary are concrete subtypes of c2cTransforms
 #%% ============================================================
 
-struct rFFT{T<:Real,nᵢ,pᵢ,dnᵢ}        <: r2cFourierTransform{T,dnᵢ,nᵢ}  end
-struct rFFTunitary{T<:Real,nᵢ,pᵢ,dnᵢ} <: r2cFourierTransform{T,dnᵢ,nᵢ}  end
-
 #%% constructors
 function rFFT(::Type{T}=Float64; nᵢ, pᵢ=nothing, Δxᵢ=nothing) where {T<:Real}
     nᵢ,pᵢ′,d = _get_npd(;nᵢ=nᵢ, pᵢ=pᵢ, Δxᵢ=Δxᵢ)
@@ -18,8 +15,8 @@ end
 
 
 #%% basic functionality
-(*)(::Type{F}, x::Array) where F<:Union{rFFT, rFFTunitary} = plan(F) * x
-(\)(::Type{F}, x::Array) where F<:Union{rFFT, rFFTunitary} = plan(F) \ x
+(*)(::Type{F}, x::Array) where F<:rFFTgeneric = plan(F) * x
+(\)(::Type{F}, x::Array) where F<:rFFTgeneric = plan(F) \ x
 
 #%% used in fourier_transforms/plan's
 function fft_mult(::Type{F}) where {T,nᵢ,pᵢ,dnᵢ,F<:rFFT{T,nᵢ,pᵢ,dnᵢ}} 
@@ -30,7 +27,7 @@ function fft_mult(::Type{F}) where {T,nᵢ,pᵢ,dnᵢ,F<:rFFTunitary{T,nᵢ,pᵢ
 end
 
 #%% specify the corresponding grid geometry
-@generated function Grid(::Type{F}) where {T,nᵢ,pᵢ,dnᵢ,F<:Union{rFFT{T,nᵢ,pᵢ,dnᵢ},rFFTunitary{T,nᵢ,pᵢ,dnᵢ}}}
+@generated function Grid(::Type{<:rFFTgeneric{T,nᵢ,pᵢ,dnᵢ}}) where {T,nᵢ,pᵢ,dnᵢ}
     y = map(nᵢ, pᵢ, 1:dnᵢ) do n, p, i
         Δx     = p/n
         Δk     = 2π/p
@@ -53,7 +50,7 @@ end
 end
  
 #%% Used for constructing the covariance matrix of a subset of frequencies
-function get_rFFTimpulses(::Type{F}) where {T,nᵢ,pᵢ,dnᵢ,F<:Union{rFFT{T,nᵢ,pᵢ,dnᵢ},rFFTunitary{T,nᵢ,pᵢ,dnᵢ}}}
+function get_rFFTimpulses(::Type{F}) where {T,nᵢ,pᵢ,dnᵢ,F<:rFFTgeneric{T,nᵢ,pᵢ,dnᵢ}}
     g  = Grid(F)
     CI = CartesianIndices(Base.OneTo.(g.nki))
     LI = LinearIndices(Base.OneTo.(g.nki))

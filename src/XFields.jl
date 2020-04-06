@@ -13,15 +13,14 @@ const module_dir  = joinpath(@__DIR__, "..") |> normpath
 
 abstract type Transform{T,d} end
 abstract type SliceTransform{T,dn,dt} end
-# These correspond to field storage types Array{T, d} and Array{T, dn+dt} in map field
+# d and dn,dt specify the Array storage dimension, T the eltype
 
-abstract type r2cTransform{T<:Real,dnᵢ,nᵢ}  <: Transform{T,dnᵢ} end
-abstract type c2cTransform{T<:Real,dnᵢ,nᵢ}  <: Transform{T,dnᵢ} end
-# These add nᵢ where nᵢ == size(map.x)
+abstract type r2cTransform{T<:Real,d}  <: Transform{T,d} end
+abstract type c2cTransform{T<:Real,d}  <: Transform{T,d} end
+abstract type r2cSliceTransform{T<:Real,dn,dt}  <: SliceTransform{T,dn,dt} end
+abstract type c2cSliceTransform{T<:Real,dn,dt}  <: SliceTransform{T,dn,dt} end
+# allow specification of the storage types of map vrs fourier fields
 
-abstract type r2cSliceTransform{T<:Real,dnᵢ,dtᵢ,nᵢ,tᵢ}  <: r2cTransform{T,dnᵢ,dtᵢ} end
-abstract type c2cSliceTransform{T<:Real,dnᵢ,dtᵢ,nᵢ,tᵢ}  <: c2cTransform{T,dnᵢ,dtᵢ} end
-# These add nᵢ,tᵢ where tuple(nᵢ...,tᵢ...) == size(map.x)
 
 export Transform, SliceTransform, r2cTransform, c2cTransform
 export r2cSliceTransform, c2cSliceTransform

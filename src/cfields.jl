@@ -4,18 +4,18 @@
 
 struct Cmap{F<:c2cTransform,T<:Real,d} <: XField{F}
     x::Array{Complex{T},d}
-    Cmap{F,T,d}(x) where {T,d,F<:c2cTransform{T,d}} = new{F,T,d}(x)
+    Cmap{F,T,d}(x)     where {T,d,F<:c2cTransform{T,d}} = new{F,T,d}(x)
     Cmap{F}(x::AbstractArray{A,d}) where {A,T,d,F<:c2cTransform{T,d}} = new{F,T,d}(Complex{T}.(x))
-    Cmap{F}() where {T,d,ni,F<:c2cTransform{T,d,ni}} = new{F,T,d}(zeros(Complex{T}, ni))
-    Cmap{F}(n::Number) where {T,d,ni,F<:c2cTransform{T,d,ni}} = new{F,T,d}(fill(Complex{T}(n), ni))
+    Cmap{F}(n::Number) where {T,d,F<:c2cTransform{T,d}} = new{F,T,d}(fill(Complex{T}(n), Grid(F).nxi))
+    Cmap{F}()          where {T,d,F<:c2cTransform{T,d}} = new{F,T,d}(zeros(Complex{T}, Grid(F).nxi))
 end
 
 struct Cfourier{F<:c2cTransform,T<:Real,d} <: XField{F}
     k::Array{Complex{T},d}
-    Cfourier{F,T,d}(k) where {T,d,F<:c2cTransform{T,d}} = new{F,T,d}(k)
+    Cfourier{F,T,d}(k)     where {T,d,F<:c2cTransform{T,d}} = new{F,T,d}(k)
     Cfourier{F}(k::AbstractArray{A,d}) where {A,T,d,F<:c2cTransform{T,d}} = new{F,T,d}(Complex{T}.(k))
-    Cfourier{F}() where {T,d,F<:c2cTransform{T,d}} = new{F,T,d}(zeros(Complex{T}, ni))
-    Cfourier{F}(n::Number) where {T,d,F<:c2cTransform{T,d}} = new{F,T,d}(fill(Complex{T}(n), ni))
+    Cfourier{F}(n::Number) where {T,d,F<:c2cTransform{T,d}} = new{F,T,d}(fill(Complex{T}(n), Grid(F).nki))
+    Cfourier{F}()          where {T,d,F<:c2cTransform{T,d}} = new{F,T,d}(zeros(Complex{T}, Grid(F).nki))
 end
 
 #  union type

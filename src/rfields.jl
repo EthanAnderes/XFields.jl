@@ -1,22 +1,22 @@
 
-#%% Rmap{F} and Rfourier{F} where F<:r2cTransform{T,d,ni}
+#%% Rmap{F} and Rfourier{F} where F<:r2cTransform{T,d}
 #%% ============================================================
 
 
 struct Rmap{F<:r2cTransform,T<:Real,d} <: XField{F}
     x::Array{T,d}
-    Rmap{F,T,d}(x) where {T,d,F<:r2cTransform{T,d}} = new{F,T,d}(x)
+    Rmap{F,T,d}(x)     where {T,d,F<:r2cTransform{T,d}} = new{F,T,d}(x)
     Rmap{F}(x::AbstractArray{A,d}) where {A,T,d,F<:r2cTransform{T,d}} = new{F,T,d}(T.(x))
-    Rmap{F}() where {T,d,ni,F<:r2cTransform{T,d,ni}} = new{F,T,d}(zeros(T, ni))
-    Rmap{F}(n::Number) where {T,d,ni,F<:r2cTransform{T,d,ni}} = new{F,T,d}(fill(T(n), ni))
+    Rmap{F}(n::Number) where {T,d,F<:r2cTransform{T,d}} = new{F,T,d}(fill(T(n), Grid(F).nxi))
+    Rmap{F}()          where {T,d,F<:r2cTransform{T,d}} = new{F,T,d}(zeros(T, Grid(F).nxi))
 end
 
 struct Rfourier{F<:r2cTransform,T<:Real,d} <: XField{F}
     k::Array{Complex{T},d}
-    Rfourier{F,T,d}(k) where {T,d,F<:r2cTransform{T,d}} = new{F,T,d}(k)
+    Rfourier{F,T,d}(k)     where {T,d,F<:r2cTransform{T,d}} = new{F,T,d}(k)
     Rfourier{F}(k::AbstractArray{A,d}) where {A,T,d,F<:r2cTransform{T,d}} = new{F,T,d}(Complex{T}.(k))
-    Rfourier{F}() where {T,d,F<:r2cTransform{T,d}} = new{F,T,d}(zeros(Complex{T}, Grid(F).nki))
     Rfourier{F}(n::Number) where {T,d,F<:r2cTransform{T,d}} = new{F,T,d}(fill(Complex{T}(n), Grid(F).nki))
+    Rfourier{F}()          where {T,d,F<:r2cTransform{T,d}} = new{F,T,d}(zeros(Complex{T}, Grid(F).nki))
 end
 
 #  union type
