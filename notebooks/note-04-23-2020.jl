@@ -1,1 +1,0 @@
-# initial testing of CMBrings
