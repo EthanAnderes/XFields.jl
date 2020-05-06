@@ -34,7 +34,7 @@ In addition the following methods need to be defined
 * `size_in(ft::𝔽{Tf,d,opt}) -> size(ai)`
 * `size_out(ft::𝔽{Tf,d,opt}) -> size(ao)`
 * `eltype_in(ft:𝔽{Tf,d,opt}) -> eltype(ai)` 
-* `eltype_out(ft:𝔽{Tf,d,opt}) -> eltype(ao)
+* `eltype_out(ft:𝔽{Tf,d,opt}) -> eltype(ao)`
 
 
 The above transform `𝔽{Tf,d,opt} <: Transform{Tf,d}` can now be used with the preloaded array wrapper `fi::Xmap{F<:𝔽{Tf,d,opt}}` and `fo::Xfourier{F<:𝔽{Tf,d,opt}}` using the new transform object `F::𝔽{Tf,d,opt}` which automatically utalizes `F` to convert
@@ -77,11 +77,10 @@ where `Ωx(F)` is a method defined for types `F<:𝔽{Tf,d,opt}`
 
 One may also define their own field type, say `Ymap{Tf,d,...}` and `Yfourier{Tf,d,...}`
 
-`abstract type YField{F<:Transform,Tf,Ti,d} <: Field{F}`
+`abstract type YField{F<:Transform,Tf,Ti,d} <: Field{F,Tf,Ti,d}`
 
 ```
-
-struct Ymap{F<:Transform, Tf<:Number, Ti<:Number, d} <: MapField{F}
+struct Ymap{F<:Transform, Tf<:Number, Ti<:Number, d} <: MapField{F,Tf,Ti,d}
     ft::F
     f::Array{Tf,d}
     function Ymap{F,Tf,Ti,d}(ft::F, f::Array{Tf,d})  where {Tf,Ti,d,F<:Transform{Tf,d}}
@@ -97,11 +96,7 @@ struct Ymap{F<:Transform, Tf<:Number, Ti<:Number, d} <: MapField{F}
 
 end
 
-# some extra constructors
-Ymap(ft::F)  where {Tf,d,F<:Transform{Tf,d}}            = Ymap(ft, zeros(Tf, size_in(ft)))
-Ymap(ft::F, n::Number)  where {Tf,d,F<:Transform{Tf,d}} = Ymap(ft, fill(Tf(n), size_in(ft)))
-
-struct Yfourier{F<:Transform, Tf<:Number, Ti<:Number, d}  <: FourierField{F}
+struct Yfourier{F<:Transform, Tf<:Number, Ti<:Number, d}  <: FourierField{F,Tf,Ti,d}
     ft::F
     f::Array{Ti,d}
     function Yfourier{F,Tf,Ti,d}(ft::F, f::Array{Ti,d})  where {Tf,Ti,d,F<:Transform{Tf,d}}
@@ -116,18 +111,6 @@ struct Yfourier{F<:Transform, Tf<:Number, Ti<:Number, d}  <: FourierField{F}
     end
 end
 
-# some extra constructors
-Yfourier(ft::F)  where {Tf,d,F<:Transform{Tf,d}}            = Yfourier(ft, zeros(Tf, size_in(ft)))
-Yfourier(ft::F, n::Number)  where {Tf,d,F<:Transform{Tf,d}} = Yfourier(ft, fill(Tf(n), size_in(ft)))
-
 ```
-
-```
-const Yfield{F,Tf,Ti,d} = Union{Yfourier{F,Tf,Ti,d}, Ymap{F,Tf,Ti,d}}
-
-getindex(f::Yfield, ::typeof(!)) = Yfourier(f).f
-getindex(f::Yfield, ::Colon)     = Ymap(f).f
-```
-
 
 

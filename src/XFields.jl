@@ -25,9 +25,9 @@ export Transform, size_in, size_out, eltype_in, eltype_out, plan
 # load src
 # ==========================================
 
-abstract type Field{F<:Transform} end
-abstract type FourierField{F<:Transform} <: Field{F} end
-abstract type MapField{F<:Transform} <: Field{F} end
+abstract type Field{F<:Transform,Tf,Ti,d} end
+abstract type FourierField{F<:Transform,Tf,Ti,d} <: Field{F,Tf,Ti,d} end
+abstract type MapField{F<:Transform,Tf,Ti,d} <: Field{F,Tf,Ti,d} end
 export Field, FourierField, MapField, Transform
 
 include("xfield.jl")
