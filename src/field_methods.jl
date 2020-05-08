@@ -1,3 +1,33 @@
+
+
+
+# @generated function fieldtransform(x::Field)
+#     ft = fieldname(x, 1)
+#     return quote
+#         $(Expr(:meta, :inline))
+#         x.$ft
+#     end
+# end
+
+# @generated function fielddata(x::Field)
+#     f = fieldname(x, 2)
+#     return quote
+#     	$(Expr(:meta, :inline))
+#     	x.$f
+#     end
+# end
+
+
+
+#  getindex
+Base.getindex(f::Field, ::typeof(!)) = fielddata(FourierField(f))
+Base.getindex(f::Field, ::Colon)     = fielddata(MapField(f))
+
+# convert to the corresponding dual field using the transform itself
+Base.:*(ft::F, f::Field{F,Tf,Ti,d})  where {Tf,Ti,d, F<:Transform{Tf,d}} = FourierField(f)
+Base.:\(ft::F, f::Field{F,Tf,Ti,d})  where {Tf,Ti,d, F<:Transform{Tf,d}} = MapField(f)
+
+
 # field operations
 # ============================================================
 
@@ -6,7 +36,7 @@ for op in (:+, :-, :*)
     @eval Base.$op(f::X, n::Number) where X<:Field = X(fieldtransform(f), broadcast($op, fielddata(f),n))
     @eval Base.$op(n::Number, f::X) where X<:Field = X(fieldtransform(f), broadcast($op, n, fielddata(f)))
 end
-Base.:^(f::X, n::Number) where X<:Field  = X(fieldtransform(f), broadcast(^, fielddata(f),n))
+Base.:^(f::X, n::Number)  where X<:Field  = X(fieldtransform(f), broadcast(^, fielddata(f),n))
 Base.:^(f::X, n::Integer) where X<:Field = X(fieldtransform(f), broadcast(^, fielddata(f),n))
 
 # op(f::Field)

@@ -28,12 +28,17 @@ using Test
 		gx = plan(ft) \ gk
 
 		fmap     = @inferred Xmap(ft, fx)
-		gfourier = @inferred Xfourier(ft, gk)
+		ffourier = @inferred Xfourier(ft, gk)
+
+		@inferred ft * fmap
+		@inferred ft \ fmap
+		@inferred ft * ffourier
+		@inferred ft \ ffourier
 
 		@test sum(abs2, fmap[:] .- fx) ≈ 0
 		@test sum(abs2, fmap[!] .- fk) ≈ 0
-		@test sum(abs2, gfourier[!] .- gk) ≈ 0
-		@test sum(abs2, gfourier[:] .- gx) ≈ 0
+		@test sum(abs2, ffourier[!] .- gk) ≈ 0
+		@test sum(abs2, ffourier[:] .- gx) ≈ 0
 	end
 
 
@@ -96,6 +101,61 @@ end
 
 
 
+## =========================================
+@testset "Xfield DiagOp" begin
+
+	let 
+		pd  = (1.0, 3.5)
+		sz  = (64,28)
+		Tf  = Float32
+		Ti  = Complex{Tf} 
+		ft  = 𝕎(Tf,sz,pd)
+		F   = typeof(ft)
+
+		Xf = Xfourier{F, Tf, Ti, 2}
+		Xm = Xmap{F, Tf, Ti, 2}
+
+		fm = @inferred Xm(ft,rand(Tf,sz))
+		ff = @inferred Xf(ft,rand(Ti,size_out(ft)))
+
+		@inferred Xfourier(fm)
+		@inferred Xf(fm)
+		@inferred Xmap(fm)
+		@inferred Xm(fm)
+
+		@inferred Xfourier(ff)
+		@inferred Xf(ff)
+		@inferred Xmap(ff)
+		@inferred Xm(ff)
+
+		@inferred fm + ff
+		@inferred - 2 * ff
+
+		L = DiagOp(fm)
+		L.f * Xmap(ff)
+		ff isa Xf
+		L * ff
+
+		L1 = DiagOp(fm+1)
+		L2 = DiagOp(ff+1)
+
+		for f ∈ (fm, ff), L ∈ (L1, L2), M ∈ (L1, L2)
+			# f = fm 
+			# L = L2
+			# M = L2
+			@inferred L * f
+			@inferred L * M * f
+			@inferred L * M \ f
+			@inferred L \ M \ f
+			@inferred L \ M * f
+			@test sum(abs2, fielddata((L * M * f) - (L * (M * f)))) ≈ 0.0 atol=1e-5
+			@test sum(abs2, fielddata((L * M \ f) - (inv(M) * (inv(L) * f)))) ≈ 0.0 atol=1e-5
+			@test sum(abs2, fielddata((L \ M \ f) - (inv(M) * (inv(inv(L)) * f)))) ≈ 0.0 atol=1e-5
+			@test sum(abs2, fielddata((L \ M * f) - (inv(L) * (M * f)))) ≈ 0.0 atol=1e-5
+		end
+
+	end
+
 
 #=
 
@@ -104,7 +164,7 @@ end
 
 let FT = rFFT(nᵢ=(256, 50), pᵢ=(1.0, 0.5))
 
-	fmap = rand(Bool, Grid(FT).nxi...) |> Rmap{FT}
+	fmap = rand(Bool, Grid(FT).nxi...) |> Xmap{FT}
 	gfourier = rand(Bool, Grid(FT).nki...) |> Rfourier{FT}
 
 	Dmap = DiagOp(fmap)
@@ -354,90 +414,6 @@ rfx = rand(Float64, grid.nxi...)
 @inferred transpose(plan(rFT))
 
 
-
-## =========================================
-
-pᵢ  = (1.0, 3.5) # periods
-nᵢ   = (64,64) # number of samples (left endpoint included)
-FFT  = rFFT{Float64,nᵢ,pᵢ,length(nᵢ)}
-UFT  = rFFTunitary{Float64,nᵢ,pᵢ,length(nᵢ)}
-grid = Grid(FFT)
-
-@inferred Grid(FFT)
-@inferred wavenumber(FFT)
-@inferred frequencies(FFT) 
-@inferred pixels(FFT) 
-
-fk = FFT * randn(nᵢ...)
-fx = FFT \ randn(Complex{Float64}, grid.nki...)
-
-f1 = Rmap{FFT}(fx)
-f2 = Rfourier{FFT}(fk)
-f4 = Rfourier{FFT}(f1)
-f3 = Rmap{FFT}(f2)
-
-@inferred f1 + f2
-@inferred - 2 * f2
-
-L = DiagOp(f1)
-L * f2
-
-L1 = DiagOp(f1+1)
-L2 = DiagOp(f2+1)
-for f ∈ (f1, f2), L ∈ (L1, L2), M ∈ (L1, L2)
-	@inferred L * f
-	@inferred L * M * f
-	@inferred L * M \ f
-	@inferred L \ M \ f
-	@inferred L \ M * f
-	@test mean(mean(abs.(t)) for t in fielddata((L * M * f) - (L * (M * f)))) ≈ 0.0 atol=1e-5
-	@test mean(mean(abs.(t)) for t in fielddata((L * M \ f) - (inv(M) * (inv(L) * f)))) ≈ 0.0 atol=1e-5
-	@test mean(mean(abs.(t)) for t in fielddata((L \ M \ f) - (inv(M) * (inv(inv(L)) * f)))) ≈ 0.0 atol=1e-5
-	@test mean(mean(abs.(t)) for t in fielddata((L \ M * f) - (inv(L) * (M * f)))) ≈ 0.0 atol=1e-5
-end
-
-
-## =========================================
-
-pᵢ  = (1.0,) 
-nᵢ   = (64,)
-FFT  = rFFT{Float64,nᵢ,pᵢ,length(nᵢ)}
-UFT  = rFFTunitary{Float64,nᵢ,pᵢ,length(nᵢ)}
-grid = Grid(FFT)
-
-@inferred Grid(FFT)
-@inferred wavenumber(FFT)
-@inferred frequencies(FFT) 
-@inferred pixels(FFT) 
-
-
-fk = FFT * rand(nᵢ...)
-fx = FFT \ rand(Complex{Float64}, grid.nki...)
-
-f1 = Rmap{FFT}(fx)
-f2 = Rfourier{FFT}(fk)
-f4 = Rfourier{FFT}(f1)
-f3 = Rmap{FFT}(f2)
-
-@inferred f1 + f2
-@inferred - 2 * f2
-
-L = DiagOp(f1)
-L * f2
-
-L1 = DiagOp(f1+1)
-L2 = DiagOp(f2+1)
-for f ∈ (f1, f2), L ∈ (L1, L2), M ∈ (L1, L2)
-	@inferred L * f
-	@inferred L * M * f
-	@inferred L * M \ f
-	@inferred L \ M \ f
-	@inferred L \ M * f
-	@test mean(mean(abs.(t)) for t in fielddata((L * M * f) - (L * (M * f)))) ≈ 0.0 atol=1e-5
-	@test mean(mean(abs.(t)) for t in fielddata((L * M \ f) - (inv(M) * (inv(L) * f)))) ≈ 0.0 atol=1e-5
-	@test mean(mean(abs.(t)) for t in fielddata((L \ M \ f) - (inv(M) * (inv(inv(L)) * f)))) ≈ 0.0 atol=1e-5
-	@test mean(mean(abs.(t)) for t in fielddata((L \ M * f) - (inv(L) * (M * f)))) ≈ 0.0 atol=1e-5
-end
 
 
 =#
