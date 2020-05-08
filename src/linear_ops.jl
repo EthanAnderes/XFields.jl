@@ -11,8 +11,6 @@ end
 # using field ops ... in analogy to foo(UΛUᵀ) = U foo(Λ) Uᵀ 
 # where foo(Λ) can be considered an operation of the field diag(Λ)
 
-# TODO: see how much generatlity you can get using just AbstractLinearOp
-
 # getindex and basic operator functionality
 # ------------------------------------------
 

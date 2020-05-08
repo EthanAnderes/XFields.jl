@@ -9,7 +9,6 @@ struct Xmap{F<:Transform, Tf<:Number, Ti<:Number, d} <: MapField{F,Tf,Ti,d}
         @assert size(fd) == size_in(ft)
         new{F,Tf,Ti,d}(ft, fd)
     end
-
 end
 
 # Xfourier
@@ -23,10 +22,9 @@ struct Xfourier{F<:Transform, Tf<:Number, Ti<:Number, d}  <: FourierField{F,Tf,T
         @assert size(fd) == size_out(ft)
         new{F,Tf,Ti,d}(ft, fd)
     end
-
 end
 
-# Interface definitions
+# Interface definitions required to hook into Field definitions
 # =================================
 
 FourierField(::Type{Xfourier{F,Tf,Ti,d}}) where {Tf,Ti,d, F<:Transform{Tf,d}} = Xfourier{F,Tf,Ti,d}
@@ -34,44 +32,13 @@ FourierField(::Type{Xmap{F,Tf,Ti,d}}) where {Tf,Ti,d, F<:Transform{Tf,d}}     = 
 MapField(::Type{Xmap{F,Tf,Ti,d}})     where {Tf,Ti,d, F<:Transform{Tf,d}}     = Xmap{F,Tf,Ti,d}
 MapField(::Type{Xfourier{F,Tf,Ti,d}}) where {Tf,Ti,d, F<:Transform{Tf,d}}     = Xmap{F,Tf,Ti,d}
 
-
 Xfield{F,Tf,Ti,d} = Union{Xfourier{F,Tf,Ti,d}, Xmap{F,Tf,Ti,d}}
-
 @inline fieldtransform(f::Xfield{F,Tf,Ti,d})  where {Tf,Ti,d, F<:Transform{Tf,d}} = f.ft
 @inline fielddata(f::Xfield{F,Tf,Ti,d}) where {Tf,Ti,d, F<:Transform{Tf,d}} = f.fd
 
 
-# Trying to make these more generic 
-# ================================
-
-
-
-#  getindex
-# Base.getindex(f::Xfield, ::typeof(!)) = Xfourier(f).f
-# Base.getindex(f::Xfield, ::Colon)     = Xmap(f).f
-
-
-
-# (::Type{Xmap{F,Tf,Ti,d}})(f::Xfield{F,Tf,Ti,d})     where {Tf,Ti,d, F<:Transform{Tf,d}} = convert(Xmap{F,Tf,Ti,d}, f)
-# (::Type{Xfourier{F,Tf,Ti,d}})(f::Xfield{F,Tf,Ti,d}) where {Tf,Ti,d, F<:Transform{Tf,d}} = convert(Xfourier{F,Tf,Ti,d}, f)
-
-# # The transform itself can be used to convert between Xmap vrs Xfourier
-# Base.:*(::Type{F}, f::Xfourier{F,Tf,Ti,d})  where {Tf,Ti,d, F<:Transform{Tf,d}} = f
-# Base.:\(::Type{F}, f::Xfourier{F,Tf,Ti,d})  where {Tf,Ti,d, F<:Transform{Tf,d}} = convert(Xmap{F,Tf,Ti,d}, f)
-# Base.:*(::Type{F}, f::Xmap{F,Tf,Ti,d})      where {Tf,Ti,d, F<:Transform{Tf,d}} = convert(Xfourier{F,Tf,Ti,d}, f)
-# Base.:\(::Type{F}, f::Xmap{F,Tf,Ti,d})      where {Tf,Ti,d, F<:Transform{Tf,d}} = f
-
-
-# you might want 
-
 # Extras
 # =================================
-
-# make constructors from fields fall back to convert
-# Xmap(f::Xfield{F,Tf,Ti,d})     where {Tf,Ti,d, F<:Transform{Tf,d}} = convert(Xmap{F,Tf,Ti,d}, f)
-# Xfourier(f::Xfield{F,Tf,Ti,d}) where {Tf,Ti,d, F<:Transform{Tf,d}} = convert(Xfourier{F,Tf,Ti,d}, f)
-Xmap(f::Xfield{F,Tf,Ti,d})     where {Tf,Ti,d, F<:Transform{Tf,d}} = MapField(f)
-Xfourier(f::Xfield{F,Tf,Ti,d}) where {Tf,Ti,d, F<:Transform{Tf,d}} = FourierField(f)
 
 function Xfourier(ft::F, fd::Array{T,d})  where {T,Tf,d,F<:Transform{Tf,d}}
     @assert size(fd) == size_out(ft)
@@ -85,6 +52,8 @@ function Xmap(ft::F, fd::Array{T,d})  where {T,Tf,d,F<:Transform{Tf,d}}
     Xmap{F,Tf,Ti,d}(ft, fd)
 end
 
+Xmap(f::Xfield{F,Tf,Ti,d})     where {Tf,Ti,d, F<:Transform{Tf,d}} = MapField(f)
+Xfourier(f::Xfield{F,Tf,Ti,d}) where {Tf,Ti,d, F<:Transform{Tf,d}} = FourierField(f)
 
 # zero and constant constructors
 Xmap(ft::F)                 where {Tf,d,F<:Transform{Tf,d}} = Xmap(ft, zeros(Tf, size_in(ft)))

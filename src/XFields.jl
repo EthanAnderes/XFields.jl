@@ -43,7 +43,7 @@ include("field_methods.jl")
 
 include("linear_ops.jl")
 
-export  Field, FourierField, MapField, DiagOp, AbstractLinearOp, fielddata, fieldtransform
+export Field, FourierField, MapField, DiagOp, AbstractLinearOp, fielddata, fieldtransform
 
 # Specific implimentation 
 # =========================================

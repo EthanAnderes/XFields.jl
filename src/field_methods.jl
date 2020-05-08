@@ -1,23 +1,5 @@
-
-
-
-# @generated function fieldtransform(x::Field)
-#     ft = fieldname(x, 1)
-#     return quote
-#         $(Expr(:meta, :inline))
-#         x.$ft
-#     end
-# end
-
-# @generated function fielddata(x::Field)
-#     f = fieldname(x, 2)
-#     return quote
-#     	$(Expr(:meta, :inline))
-#     	x.$f
-#     end
-# end
-
-
+# getindex for :, ! and *, / with the transform 
+# ============================================================
 
 #  getindex
 Base.getindex(f::Field, ::typeof(!)) = fielddata(FourierField(f))

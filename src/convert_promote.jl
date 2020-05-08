@@ -1,7 +1,6 @@
 # convert and promote
 # ============================================================
 
-
 #  convert and promote
 function Base.promote_rule(::Type{MF}, ::Type{FF}) where {Tf,Ti,d, F<:Transform{Tf,d}, MF<:MapField{F,Tf,Ti,d}, FF<:FourierField{F,Tf,Ti,d}} 
     return MF
