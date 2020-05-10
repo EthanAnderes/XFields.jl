@@ -40,13 +40,13 @@ Xfield{F,Tf,Ti,d} = Union{Xfourier{F,Tf,Ti,d}, Xmap{F,Tf,Ti,d}}
 # Extras
 # =================================
 
-function Xfourier(ft::F, fd::Array{T,d})  where {T,Tf,d,F<:Transform{Tf,d}}
+function Xfourier(ft::F, fd::AbstractArray{T,d})  where {T,Tf,d,F<:Transform{Tf,d}}
     @assert size(fd) == size_out(ft)
     Ti = eltype_out(ft)
     Xfourier{F,Tf,Ti,d}(ft, fd)
 end
 
-function Xmap(ft::F, fd::Array{T,d})  where {T,Tf,d,F<:Transform{Tf,d}}
+function Xmap(ft::F, fd::AbstractArray{T,d})  where {T,Tf,d,F<:Transform{Tf,d}}
     @assert size(fd) == size_in(ft)
     Ti = eltype_out(ft)
     Xmap{F,Tf,Ti,d}(ft, fd)
