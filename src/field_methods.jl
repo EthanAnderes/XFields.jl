@@ -39,6 +39,8 @@ for op in (:+, :-, :*)
     @eval Base.$op(a::X, b::X) where {X<:Field} = X(fieldtransform(a), broadcast($op, fielddata(a),fielddata(b)))
 end
 
+Base.:\(a::X, b::X) where {X<:Field} = X(fieldtransform(a), nan2zero.(fielddata(b) ./ fielddata(a)))
+
 #  op(f::F, g::F) for different types F<:Field
 for op in (:+, :-)
     @eval Base.$op(a::Field, b::Field) = $op(promote(a,b)...)

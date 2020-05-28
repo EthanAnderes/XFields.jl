@@ -101,13 +101,12 @@ end
 
 
 
-## =========================================
 @testset "Xfield DiagOp" begin
 
 	let 
 		pd  = (1.0, 3.5)
 		sz  = (64,28)
-		Tf  = Float32
+		Tf  = Float64
 		Ti  = Complex{Tf} 
 		ft  = 𝕎(Tf,sz,pd)
 		F   = typeof(ft)
@@ -116,7 +115,7 @@ end
 		Xm = Xmap{F, Tf, Ti, 2}
 
 		fm = @inferred Xm(ft,rand(Tf,sz))
-		ff = @inferred Xf(ft,rand(Ti,size_out(ft)))
+		ff = @inferred Xf(Xm(ft,rand(Tf,sz)))
 
 		@inferred Xfourier(fm)
 		@inferred Xf(fm)
@@ -139,10 +138,23 @@ end
 		L1 = DiagOp(fm+1)
 		L2 = DiagOp(ff+1)
 
+
+
+		L1 * L2
+		L2 * L2
+		L1 * L1
+
+		L2 * L2 * fm
+		L2 * (L2 * fm)
+
+		L1 * L1 * ff
+		L1 * (L1 * ff)
+
+		L1 * L2 * L2
+
+		L1 * L2 \ L2
+		
 		for f ∈ (fm, ff), L ∈ (L1, L2), M ∈ (L1, L2)
-			# f = fm 
-			# L = L2
-			# M = L2
 			@inferred L * f
 			@inferred L * M * f
 			@inferred L * M \ f
@@ -155,70 +167,63 @@ end
 		end
 
 	end
-
-
-#=
-
-#%% Uniform scaling
-#%% ------------------------------------------
-
-let FT = rFFT(nᵢ=(256, 50), pᵢ=(1.0, 0.5))
-
-	fmap = rand(Bool, Grid(FT).nxi...) |> Xmap{FT}
-	gfourier = rand(Bool, Grid(FT).nki...) |> Rfourier{FT}
-
-	Dmap = DiagOp(fmap)
-	Dfourier = DiagOp(fmap)
-
-	Id2 = 2*LinearAlgebra.I
-
-	@inferred Id2 * fmap 
-	@inferred Id2 * gfourier
-	@inferred Id2 \ fmap 
-	@inferred Id2 \ gfourier
-
-	@inferred Dmap * Id2
-	@inferred Dfourier * Id2
-	@inferred Dmap + Id2
-	@inferred Dfourier + Id2
-	@inferred Dmap - Id2
-	@inferred Dfourier - Id2
-
-	@inferred Id2 * Dmap
-	@inferred Id2 * Dfourier
-	@inferred Id2 + Dmap
-	@inferred Id2 + Dfourier
-	@inferred Id2 - Dmap
-	@inferred Id2 - Dfourier 
-
-
-	# @test Id2 * fmap 
-	# @test Id2 * gfourier
-	# @test Id2 \ fmap 
-	# @test Id2 \ gfourier
-
-	# @test Dmap * Id2
-	# @test Dfourier * Id2
-	# @test Dmap + Id2
-	# @test Dfourier + Id2
-	# @test Dmap - Id2
-	# @test Dfourier - Id2
-
-	# @test Id2 * Dmap
-	# @test Id2 * Dfourier
-	# @test Id2 + Dmap
-	# @test Id2 + Dfourier
-	# @test Id2 - Dmap
-	# @test Id2 - Dfourier 
+end
 
 
 
+
+@testset "Uniform scaling" begin
+
+	let nᵢ=(256, 50), pᵢ=(1.0, 0.5), Tf  = Float64
+
+		Ti  = Complex{Tf} 
+		ft  = 𝕎(Tf,nᵢ,pᵢ)
+
+
+		fmap    = Xmap(ft, rand(Bool, size_in(ft)))
+		gfourier = Xfourier(ft, rand(Bool, size_out(ft)))
+
+		Dmap = DiagOp(fmap)
+		Dfourier = DiagOp(gfourier)
+
+		Id2 = 2*LinearAlgebra.I
+
+		@inferred Id2 * fmap 
+		@inferred Id2 * gfourier
+		@inferred Id2 \ fmap 
+		@inferred Id2 \ gfourier
+
+		@inferred Dmap * Id2
+		@inferred Dfourier * Id2
+		@inferred Dmap + Id2
+		@inferred Dfourier + Id2
+		@inferred Dmap - Id2
+		@inferred Dfourier - Id2
+
+		@inferred Id2 * Dmap
+		@inferred Id2 * Dfourier
+		@inferred Id2 + Dmap
+		@inferred Id2 + Dfourier
+		@inferred Id2 - Dmap
+		@inferred Id2 - Dfourier 
+
+		# TODO add actual tests here ..
+	end
 
 end
 
 
-#%% SField Constructors
-#%% ------------------------------------------
+
+
+
+
+
+
+
+#=
+
+#' SField Constructors
+#' ------------------------------------------
 
 let FT = rFFT(nᵢ=(256, 50), pᵢ=(1.0, 0.5))
 
@@ -237,8 +242,8 @@ end
 
 
 
-#%% Test using FT for converting between Rmap and Rfourier
-#%% ------------------------------------------
+#' Test using FT for converting between Rmap and Rfourier
+#' ------------------------------------------
 
 let FT = rFFT(nᵢ=(256, 50), pᵢ=(1.0, 0.5))
 	
@@ -265,7 +270,7 @@ end
 
 
 
-##======================================================
+#' ======================================================
 pᵢ  = (1.0, 0.5) # periods
 nᵢ   = (256, 256) # number of samples (left endpoint included)
 FT  = rFFT{Float32,nᵢ,pᵢ,length(nᵢ)}
@@ -319,7 +324,7 @@ L1 * f2
 L2 * L1 * f2
 L2 * L1
 
-##======================================================
+#' ======================================================
 pᵢ  = (1.0,) 
 nᵢ   = (256,)
 FT  = rFFT{Float64,nᵢ,pᵢ,length(nᵢ)}
@@ -346,7 +351,7 @@ L * f2
 
 
     
-## =========================================
+#' =========================================
 
 nᵢ  = (256, 50) # number of samples (left endpoint included)
 pᵢ  = (1.0, 0.5) # periods
@@ -374,7 +379,7 @@ gridu3 = Grid(FFTu3)
 
 
 
-## =========================================
+#' =========================================
 
 pᵢ  = (1.0, 0.5) # periods
 nᵢ   = (256, 256) # number of samples (left endpoint included)
