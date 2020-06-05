@@ -4,7 +4,7 @@
 struct Xmap{F<:Transform, Tf<:Number, Ti<:Number, d} <: MapField{F,Tf,Ti,d}
     ft::F
     fd::Array{Tf,d}
-    function Xmap{F,Tf,Ti,d}(ft::F, fd::Array{T,d})  where {Tf,Ti,T,d,F<:Transform{Tf,d}}
+    function Xmap{F,Tf,Ti,d}(ft::F, fd::AbstractArray{T,d})  where {Tf,Ti,T,d,F<:Transform{Tf,d}}
         @assert Ti == eltype_out(ft)
         @assert size(fd) == size_in(ft)
         new{F,Tf,Ti,d}(ft, fd)
@@ -17,7 +17,7 @@ end
 struct Xfourier{F<:Transform, Tf<:Number, Ti<:Number, d}  <: FourierField{F,Tf,Ti,d}
     ft::F
     fd::Array{Ti,d}
-    function Xfourier{F,Tf,Ti,d}(ft::F, fd::Array{T,d})  where {Tf,Ti,T,d,F<:Transform{Tf,d}}
+    function Xfourier{F,Tf,Ti,d}(ft::F, fd::AbstractArray{T,d})  where {Tf,Ti,T,d,F<:Transform{Tf,d}}
         @assert Ti == eltype_out(ft)
         @assert size(fd) == size_out(ft)
         new{F,Tf,Ti,d}(ft, fd)

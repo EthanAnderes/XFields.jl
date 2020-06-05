@@ -14,11 +14,12 @@ Base.:\(ft::F, f::Field{F,Tf,Ti,d})  where {Tf,Ti,d, F<:Transform{Tf,d}} = MapFi
 # ============================================================
 
 # op(f::Field, n::Number) and op(n::Number, f::Field)
-for op in (:+, :-, :*)
+for op in (:+, :-, :*, :/, :\)
     @eval Base.$op(f::X, n::Number) where X<:Field = X(fieldtransform(f), broadcast($op, fielddata(f),n))
     @eval Base.$op(n::Number, f::X) where X<:Field = X(fieldtransform(f), broadcast($op, n, fielddata(f)))
 end
-Base.:^(f::X, n::Number)  where X<:Field  = X(fieldtransform(f), broadcast(^, fielddata(f),n))
+
+Base.:^(f::X, n::Number)  where X<:Field = X(fieldtransform(f), broadcast(^, fielddata(f),n))
 Base.:^(f::X, n::Integer) where X<:Field = X(fieldtransform(f), broadcast(^, fielddata(f),n))
 
 # op(f::Field)
@@ -39,7 +40,8 @@ for op in (:+, :-, :*)
     @eval Base.$op(a::X, b::X) where {X<:Field} = X(fieldtransform(a), broadcast($op, fielddata(a),fielddata(b)))
 end
 
-Base.:\(a::X, b::X) where {X<:Field} = X(fieldtransform(a), nan2zero.(fielddata(b) ./ fielddata(a)))
+Base.:\(a::X, b::X) where {X<:Field} = X(fieldtransform(a), nan2zero.(fielddata(a) .\ fielddata(b)))
+Base.:/(a::X, b::X) where {X<:Field} = X(fieldtransform(a), nan2zero.(fielddata(a) ./ fielddata(b)))
 
 #  op(f::F, g::F) for different types F<:Field
 for op in (:+, :-)
