@@ -5,9 +5,9 @@ using PyPlot
 
 # Define the transform# ------------------------------------------
 Ft = let
-    𝕨 = r𝕎32(256, π) ⊗ 𝕎(512, 4.0)
+    𝕨 = r𝕎32(128, π) ⊗ 𝕎(256, 4.0)
     ordinary_scale(𝕨)*𝕨
-end
+end;
 
 # Signal and noise spectral density# --------------------------------------------
 # Signal spectral density
@@ -59,7 +59,7 @@ Tr =  let Ft=Ft, beam_npix = 4
     Tr   = Xfourier(Ft, tr) |> DiagOp
 
     Tr
-end
+end;
 
 # White noise simulator# ------------------------------------
 function ωη(Ft::T) where T<:Transform
@@ -79,7 +79,7 @@ dsim, fsim, nsim = let Ft=Ft, Cf=Cf, Cn=Cn, Cf=Cf, Ma=Ma, Tr=Tr
     dsim = dsim - Ma * μsim
 
     dsim, fsim, nsim
-end
+end;
 
 # Plots of the signal, noise and data# --------------------------------------------------------------
 # ## Signal `fsim`
@@ -171,8 +171,7 @@ let Ft=Ft, Cn=Cn, Cf=Cf, f=fsim, n=nsim
     ax.set_xlabel("wavenumber")
     ax.set_ylabel("power")
     fig.tight_layout()
-
-end
+end;
 
 # Set up basic  d = M⋅Tf⋅f + M⋅n# --------------------------------------------------------------
 # custom pcg with function composition (Minv * A \approx I)
@@ -215,7 +214,7 @@ wfsim, wfhist, zwf = let Ft=Ft, Cn=Cn, Cf=Cf, Tr=Tr, Ma=Ma, dsim=dsim
             w -> P * w,
             w -> A * w +  B * w,
             Ma * Tr / Cn * dsim,
-            nsteps  = 4500,
+            nsteps  = 500,
             rel_tol = 1e-15,
     )
 
@@ -237,13 +236,14 @@ zwf
 let wfhist=wfhist
     fig, ax = subplots(1, figsize=(8,4))
     semilogy(wfhist)
-end
+end;
 
 # The Wiener filter
 let Ft=Ft, f=wfsim
     fig, ax = subplots(1, figsize=(8,4))
     x1, x2 = pix(Ft)
-    pcm = ax.pcolormesh(x2, x1, f[:])
+    vm = extrema(f[:]) .|> abs |> x->max(x...)
+    pcm = ax.pcolormesh(x2, x1, f[:],vmin=-vm, vmax=vm)
     ax.set_title("Wiener filter")
     fig.colorbar(pcm, ax = ax)
     fig.tight_layout()

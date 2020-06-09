@@ -44,7 +44,7 @@ using PyPlot
 # ------------------------------------------
 
 Ft = let 
-    𝕨 = r𝕎32(256, π) ⊗ 𝕎(512, 4.0)
+    𝕨 = r𝕎32(128, π) ⊗ 𝕎(256, 4.0)
     ordinary_scale(𝕨)*𝕨
 end;
 
@@ -153,7 +153,7 @@ let Ft=Ft, f=fsim
     fig.tight_layout()
 end;
 #nb gcf() 
-#md savefig(joinpath(@__DIR__,"plot1.png")); #hide
+#md savefig(joinpath(@__DIR__,"plot1.png")); 
 #md # ![plot1](plot1.png)
 
 
@@ -167,7 +167,7 @@ let Ft=Ft, f=nsim
     fig.tight_layout()
 end;
 #nb gcf()
-#md savefig(joinpath(@__DIR__,"plot2.png")); #hide
+#md savefig(joinpath(@__DIR__,"plot2.png")); 
 #md # ![plot1](plot2.png)
 
 
@@ -181,7 +181,7 @@ let Ft=Ft, f=dsim
     fig.tight_layout()
 end;
 #nb gcf() 
-#md savefig(joinpath(@__DIR__,"plot3.png")); #hide
+#md savefig(joinpath(@__DIR__,"plot3.png")); 
 #md # ![plot1](plot3.png)
 
 
@@ -205,7 +205,7 @@ let Ft=Ft, Ma=Ma, Tr=Tr
     fig.tight_layout()
 end;
 #nb gcf() 
-#md savefig(joinpath(@__DIR__,"plot4.png")); #hide
+#md savefig(joinpath(@__DIR__,"plot4.png")); 
 #md # ![plot1](plot4.png)
 
 
@@ -261,7 +261,7 @@ let Ft=Ft, Cn=Cn, Cf=Cf, f=fsim, n=nsim
     fig.tight_layout()
 end;
 #nb gcf()
-#md savefig(joinpath(@__DIR__,"plot5.png")); #hide
+#md savefig(joinpath(@__DIR__,"plot5.png")); 
 #md # ![plot1](plot5.png)
 
 
@@ -313,7 +313,7 @@ wfsim, wfhist, zwf = let Ft=Ft, Cn=Cn, Cf=Cf, Tr=Tr, Ma=Ma, dsim=dsim
             w -> P * w,
             w -> A * w +  B * w,
             Ma * Tr / Cn * dsim,
-            nsteps  = 4500,
+            nsteps  = 500,
             rel_tol = 1e-15,
     )
 
@@ -340,7 +340,7 @@ let wfhist=wfhist
     semilogy(wfhist)
 end;
 #nb gcf()
-#md savefig(joinpath(@__DIR__,"plot6.png")); #hide
+#md savefig(joinpath(@__DIR__,"plot6.png")); 
 #md # ![plot1](plot6.png)
 
 
@@ -348,12 +348,13 @@ end;
 let Ft=Ft, f=wfsim
     fig, ax = subplots(1, figsize=(8,4))
     x1, x2 = pix(Ft)
-    pcm = ax.pcolormesh(x2, x1, f[:])
+    vm = extrema(f[:]) .|> abs |> x->max(x...)
+    pcm = ax.pcolormesh(x2, x1, f[:],vmin=-vm, vmax=vm)
     ax.set_title("Wiener filter")
     fig.colorbar(pcm, ax = ax)
     fig.tight_layout()
 end;
 #nb gcf()
-#md savefig(joinpath(@__DIR__,"plot7.png")); #hide
+#md savefig(joinpath(@__DIR__,"plot7.png")); 
 #md # ![plot1](plot7.png)
 
