@@ -12,8 +12,139 @@ Installation
 
 ```
 julia> using Pkg
-julia> pkg"add https://github.com/EthanAnderes/XFields.jl#master"
+julia> pkg"add https://github.com/EthanAnderes/XFields.jl"
 ```
+
+# Quickstart: Pixel field with fourier operator 
+
+Here is a quick example of a one dimensional field period on the interval [0, 1). We will construct two operators A, B where A represents the derivative operator, diagonal in Fourier space, and B represents a pixel masking operator, diagonal in pixel space.
+
+First we defined the transform between pixel fields and Fourier fields using the package FFTransforms which provides a template for the transform types which parameterize Xfields.
+
+```
+using XFields
+using FFTransforms
+
+npix   = 128
+period = 1.0 
+Wt = r𝕎(npix, period)
+```
+
+The transform `Wt` represents regular real discrete Fourier transform. We can scale it to obtain a discrete version of the integral transform (i.e. with pre-factor Δpix / (2π)^(d/2) with d = 1 in this example). 
+
+```
+scale = ordinary_scale(Wt) # 0.003116736565636193
+Ft = scale * Wt
+```
+
+The transform `Ft` holds enough information to be able to generate a concrete FFT plan, extracted via the method `plan`
+
+```
+FFt = plan(Ft)
+fx = randn(npix)
+fk = FFt * fx
+sum(abs2, fx .- FFt \ fk)
+``` 
+
+The transform `Ft` can also be used to generate a basis agnostic field type. 
+
+```
+f = Xmap(Ft, fx)
+```
+
+The constructor `Xmap` generates a field which is stored in pixel coordinates and also holds `Ft` so it can automatically convert to Fourier basis and back to pixel basis when needed. To see this in action lets now defined `A` and `B` as described above 
+
+```
+ik = im * freq(Ft)[1]  # diagonal elements of d/dx in Fourier space
+mx = rand(npix) .< 0.5 # pixel mask
+A = Xfourier(Ft, ik) |> DiagOp
+B = Xmap(Ft, mx) |> DiagOp
+```
+
+Now we can use `A` and `B` as matrix operators on `f` and, internally, the transforms to and from Fourier space are handled automatically 
+
+```
+af = A * f
+bf = B * f
+cf = A * B * f  - B * A * f
+```
+
+Each on of `af`, `bf` and `cf` is another instance of an `Xmap{typeof(Ft)}` whos pixel values can be extracted with `fielddata` or with `:` indexing 
+
+```
+julia> af[:]
+128-element Array{Float64,1}:
+  110.58746393123022
+  -57.2551301738924
+ -252.01103182546902
+  319.13605401234
+    ⋮
+
+julia> bf[:]
+128-element Array{Float64,1}:
+ -0.9205754019342572
+  0.4769001923181931
+ -0.0
+ -1.0349069395521513
+    ⋮
+
+
+ julia> cf[:]
+128-element Array{Float64,1}:
+ -110.2082261043798
+  208.17650662242562
+ -213.571475779447
+ -285.53106590672445
+  114.28788227443992
+    ⋮
+
+``` 
+
+Also the Fourier coefficients can be extracted with `!` indexing
+
+
+
+```
+julia> af[!]
+65-element Array{Complex{Float64},1}:
+  2.1259915449510525e-15 + 0.0im
+     0.09809052721197642 - 0.11935338002108792im
+      0.7697055591088555 - 0.22907176932738127im
+     -0.7313295036626855 - 0.6181242403839325im
+    -0.11815322659743498 + 0.2982645102415518im
+    ⋮
+
+julia> bf[!]
+65-element Array{Complex{Float64},1}:
+   0.043522929531874074 + 0.0im
+  -0.007868454304947346 + 0.0021877926624518994im
+  -0.016332493138807334 - 0.02188401856709664im
+  -0.010917750036908718 + 0.01704245672465362im
+    ⋮
+
+julia> cf[!]
+65-element Array{Complex{Float64},1}:
+    5.681171544522148 + 0.0im
+   0.6721949791035988 + 2.6712627645708547im
+   -5.515015479213712 - 1.0806708378945662im
+   -4.783820311291526 + 0.4231963572336103im
+    ⋮
+```
+
+We also are able to perform basic operations on these fields via 
+
+```
+2 * A * f -  √B \ af
+```
+where mixes of Xfourier or Xmap types are appropriately and automatically converged to a common basis before the operation is performed.
+
+
+
+## Quickstart: Fourier field with pixel operator
+
+
+
+
 
 
 ## Transforms
