@@ -10,7 +10,7 @@
 
 Installation
 
-```
+```julia
 julia> using Pkg
 julia> pkg"add https://github.com/EthanAnderes/XFields.jl"
 ```
@@ -21,7 +21,7 @@ Here is a quick example of a one dimensional field period on the interval [0, 1)
 
 First we defined the transform between pixel fields and Fourier fields using the package FFTransforms which provides a template for the transform types which parameterize Xfields.
 
-```
+```julia
 using XFields
 using FFTransforms
 
@@ -32,14 +32,14 @@ Wt = r𝕎(npix, period)
 
 The transform `Wt` represents regular real discrete Fourier transform. We can scale it to obtain a discrete version of the integral transform (i.e. with pre-factor Δpix / (2π)^(d/2) with d = 1 in this example). 
 
-```
+```julia
 scale = ordinary_scale(Wt) # 0.003116736565636193
 Ft = scale * Wt
 ```
 
 The transform `Ft` holds enough information to be able to generate a concrete FFT plan, extracted via the method `plan`
 
-```
+```julia
 FFt = plan(Ft)
 fx = randn(npix)
 fk = FFt * fx
@@ -48,13 +48,13 @@ sum(abs2, fx .- FFt \ fk)
 
 The transform `Ft` can also be used to generate a basis agnostic field type. 
 
-```
+```julia
 f = Xmap(Ft, fx)
 ```
 
 The constructor `Xmap` generates a field which is stored in pixel coordinates and also holds `Ft` so it can automatically convert to Fourier basis and back to pixel basis when needed. To see this in action lets now defined `A` and `B` as described above 
 
-```
+```julia
 ik = im * freq(Ft)[1]  # diagonal elements of d/dx in Fourier space
 mx = rand(npix) .< 0.5 # pixel mask
 A = Xfourier(Ft, ik) |> DiagOp
@@ -63,7 +63,7 @@ B = Xmap(Ft, mx) |> DiagOp
 
 Now we can use `A` and `B` as matrix operators on `f` and, internally, the transforms to and from Fourier space are handled automatically 
 
-```
+```julia
 af = A * f
 bf = B * f
 cf = A * B * f  - B * A * f
@@ -71,7 +71,7 @@ cf = A * B * f  - B * A * f
 
 Each on of `af`, `bf` and `cf` is another instance of an `Xmap{typeof(Ft)}` whos pixel values can be extracted with `fielddata` or with `:` indexing 
 
-```
+```julia
 julia> af[:]
 128-element Array{Float64,1}:
   110.58746393123022
@@ -104,7 +104,7 @@ Also the Fourier coefficients can be extracted with `!` indexing
 
 
 
-```
+```julia
 julia> af[!]
 65-element Array{Complex{Float64},1}:
   2.1259915449510525e-15 + 0.0im
