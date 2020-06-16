@@ -1,6 +1,5 @@
 module XFields
 
-using Reexport
 using LinearAlgebra
 using FFTW
 
