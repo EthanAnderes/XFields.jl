@@ -19,5 +19,6 @@
 *.synctex.gz
 local
 downloads
+Manifest.toml
 
 

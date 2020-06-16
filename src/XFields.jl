@@ -3,9 +3,6 @@ module XFields
 using LinearAlgebra
 using FFTW
 
-# import Base: +, -, *, ^, \, sqrt, getindex, promote_rule, convert, show, inv, transpose
-# import LinearAlgebra: dot, adjoint, diag, \
-
 const module_dir  = joinpath(@__DIR__, "..") |> normpath
 
 # Abstract Transform
