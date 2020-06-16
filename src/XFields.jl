@@ -1,7 +1,6 @@
 module XFields
 
 using LinearAlgebra
-using FFTW
 
 const module_dir  = joinpath(@__DIR__, "..") |> normpath
 
