@@ -1,5 +1,4 @@
 #src This file generates:        
-#src - `example.jl`              
 #src - `example.ipynb`           
 #src - `example.md`              
 #src                             
@@ -8,27 +7,24 @@
 
 using Literate              #src
                             #src
-Literate.script(            #src
+                            #src
+config = Dict(                      #src
+    "documenter"    => false,       #src
+    "keep_comments" => true,        #src
+    "execute"       => true,        #src
+    "name"          => "example",   #src
+)                                   #src
+
+Literate.notebook(          #src
     "make.jl",              #src
-    name="example",         #src
-    execute=false,          #src
-    documentor=false,       #src
-    keep_comments=true,     #src
+    config=config,          #src
 )                           #src
                             #src
 Literate.markdown(          #src
     "make.jl",              #src
-    name="example",         #src
-    execute=true,           #src
-    documentor=false,       #src
+    config=config,          #src
 )                           #src
-                            #src
-Literate.notebook(          #src
-    "make.jl",              #src
-    name="example",         #src
-    execute=true,           #src
-    documentor=false,       #src
-)                           #src
+
 
 
 

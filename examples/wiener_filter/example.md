@@ -1,7 +1,3 @@
-```@meta
-EditURL = "<unknown>/make.jl"
-```
-
 ```julia
 using XFields
 using FFTransforms
@@ -17,7 +13,6 @@ Ft = let
     𝕨 = r𝕎32(128, π) ⊗ 𝕎(256, 4.0)
     ordinary_scale(𝕨)*𝕨
 end;
-nothing #hide
 ```
 
 Signal and noise spectral density
@@ -38,7 +33,6 @@ Cf = let Ft = Ft, ρ = 0.5, ν = 0.1, σ² = 1/2
 
     clop * (σ² / cv0)
 end;
-nothing #hide
 ```
 
 Noise spectral density
@@ -54,7 +48,6 @@ Cn =  let Ft=Ft, μKarcminT=15, ℓknee=50, αknee=2
 
     Cn
 end;
-nothing #hide
 ```
 
 Mask and Transfer function linear operators
@@ -73,7 +66,6 @@ Ma =  let Ft=Ft, x1bdry = (0.1, 0.9), x2bdry = (0.2,0.95)
 
     Ma
 end;
-nothing #hide
 ```
 
 Transfer function
@@ -89,7 +81,6 @@ Tr =  let Ft=Ft, beam_npix = 4
 
     Tr
 end;
-nothing #hide
 ```
 
 White noise simulator
@@ -122,7 +113,6 @@ dsim, fsim, nsim = let Ft=Ft, Cf=Cf, Cn=Cn, Cf=Cf, Ma=Ma, Tr=Tr
 
     dsim, fsim, nsim
 end;
-nothing #hide
 ```
 
 Plots of the signal, noise and data
@@ -140,7 +130,6 @@ let Ft=Ft, f=fsim
     fig.tight_layout()
 end;
 savefig(joinpath(@__DIR__,"plot1.png"));
-nothing #hide
 ```
 
 ![plot1](plot1.png)
@@ -157,7 +146,6 @@ let Ft=Ft, f=nsim
     fig.tight_layout()
 end;
 savefig(joinpath(@__DIR__,"plot2.png"));
-nothing #hide
 ```
 
 ![plot1](plot2.png)
@@ -174,7 +162,6 @@ let Ft=Ft, f=dsim
     fig.tight_layout()
 end;
 savefig(joinpath(@__DIR__,"plot3.png"));
-nothing #hide
 ```
 
 ![plot1](plot3.png)
@@ -200,7 +187,6 @@ let Ft=Ft, Ma=Ma, Tr=Tr
     fig.tight_layout()
 end;
 savefig(joinpath(@__DIR__,"plot4.png"));
-nothing #hide
 ```
 
 ![plot1](plot4.png)
@@ -263,7 +249,6 @@ let Ft=Ft, Cn=Cn, Cf=Cf, f=fsim, n=nsim
     fig.tight_layout()
 end;
 savefig(joinpath(@__DIR__,"plot5.png"));
-nothing #hide
 ```
 
 ![plot1](plot5.png)
@@ -336,7 +321,6 @@ wfsim, wfhist, zwf = let Ft=Ft, Cn=Cn, Cf=Cf, Tr=Tr, Ma=Ma, dsim=dsim
     wfsim, wfhist, zwf
 
 end;
-nothing #hide
 ```
 
 ```julia
@@ -344,7 +328,7 @@ zwf
 ```
 
 ```
-11.698592076229296
+8.952441970003004
 ```
 
 the "residual" per iteration
@@ -355,7 +339,6 @@ let wfhist=wfhist
     semilogy(wfhist)
 end;
 savefig(joinpath(@__DIR__,"plot6.png"));
-nothing #hide
 ```
 
 ![plot1](plot6.png)
@@ -373,7 +356,6 @@ let Ft=Ft, f=wfsim
     fig.tight_layout()
 end;
 savefig(joinpath(@__DIR__,"plot7.png"));
-nothing #hide
 ```
 
 ![plot1](plot7.png)
