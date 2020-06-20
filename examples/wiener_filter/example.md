@@ -323,7 +323,7 @@ zwf
 ```
 
 ```
-8.671087340929136
+10.511371387932616
 ```
 
 the "residual" per iteration
@@ -349,12 +349,8 @@ let Ft=Ft, f=wfsim
     fig.colorbar(pcm, ax = ax)
     fig.tight_layout()
 end;
-savefig(joinpath(@__DIR__,"plot7.png")) #src
+close() #src
 ```
 
 ![plot1](plot7.png)
-
----
-
-*This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
 

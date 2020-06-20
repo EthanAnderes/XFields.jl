@@ -13,6 +13,7 @@ config = Dict(                      #src
     "keep_comments" => true,        #src
     "execute"       => true,        #src
     "name"          => "example",   #src
+    "credit"        => false,       #src
 )                                   #src
 
 Literate.notebook(          #src
@@ -148,9 +149,10 @@ let Ft=Ft, f=fsim
     fig.colorbar(pcm, ax = ax)
     fig.tight_layout()
 end;
-#nb gcf() 
 savefig(joinpath(@__DIR__,"plot1.png")) #src
+close() #src
 #md # ![plot1](plot1.png)
+#nb gcf() 
 
 
 # ## Noise `nsim`
@@ -162,9 +164,10 @@ let Ft=Ft, f=nsim
     fig.colorbar(pcm, ax = ax)
     fig.tight_layout()
 end;
-#nb gcf()
 savefig(joinpath(@__DIR__,"plot2.png")) #src
+close() #src
 #md # ![plot1](plot2.png)
+#nb gcf()
 
 
 # ## Data `dsim`
@@ -176,9 +179,10 @@ let Ft=Ft, f=dsim
     fig.colorbar(pcm, ax = ax)
     fig.tight_layout()
 end;
-#nb gcf() 
 savefig(joinpath(@__DIR__,"plot3.png")) #src
+close() #src
 #md # ![plot1](plot3.png)
+#nb gcf() 
 
 
 
@@ -200,9 +204,10 @@ let Ft=Ft, Ma=Ma, Tr=Tr
     fig.colorbar(pcm2, ax=ax[2])
     fig.tight_layout()
 end;
-#nb gcf() 
 savefig(joinpath(@__DIR__,"plot4.png")) #src
+close() #src
 #md # ![plot1](plot4.png)
+#nb gcf() 
 
 
 
@@ -256,9 +261,10 @@ let Ft=Ft, Cn=Cn, Cf=Cf, f=fsim, n=nsim
     ax.set_ylabel("power")
     fig.tight_layout()
 end;
-#nb gcf()
 savefig(joinpath(@__DIR__,"plot5.png")) #src
+close() #src
 #md # ![plot1](plot5.png)
+#nb gcf()
 
 
 
@@ -335,9 +341,10 @@ let wfhist=wfhist
     fig, ax = subplots(1, figsize=(8,4))
     semilogy(wfhist)
 end;
-#nb gcf()
 savefig(joinpath(@__DIR__,"plot6.png")) #src
+close() #src
 #md # ![plot1](plot6.png)
+#nb gcf()
 
 
 # The Wiener filter
@@ -350,7 +357,9 @@ let Ft=Ft, f=wfsim
     fig.colorbar(pcm, ax = ax)
     fig.tight_layout()
 end;
-#nb gcf()
-savefig(joinpath(@__DIR__,"plot7.png")) #src 
+savefig(joinpath(@__DIR__,"plot7.png")) #src
+close() #src 
 #md # ![plot1](plot7.png)
+#nb gcf()
 
+#src For some reason the last src line isn't scrubbed
