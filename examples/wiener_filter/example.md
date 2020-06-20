@@ -129,7 +129,6 @@ let Ft=Ft, f=fsim
     fig.colorbar(pcm, ax = ax)
     fig.tight_layout()
 end;
-savefig(joinpath(@__DIR__,"plot1.png"));
 ```
 
 ![plot1](plot1.png)
@@ -145,7 +144,6 @@ let Ft=Ft, f=nsim
     fig.colorbar(pcm, ax = ax)
     fig.tight_layout()
 end;
-savefig(joinpath(@__DIR__,"plot2.png"));
 ```
 
 ![plot1](plot2.png)
@@ -161,7 +159,6 @@ let Ft=Ft, f=dsim
     fig.colorbar(pcm, ax = ax)
     fig.tight_layout()
 end;
-savefig(joinpath(@__DIR__,"plot3.png"));
 ```
 
 ![plot1](plot3.png)
@@ -186,7 +183,6 @@ let Ft=Ft, Ma=Ma, Tr=Tr
     fig.colorbar(pcm2, ax=ax[2])
     fig.tight_layout()
 end;
-savefig(joinpath(@__DIR__,"plot4.png"));
 ```
 
 ![plot1](plot4.png)
@@ -248,7 +244,6 @@ let Ft=Ft, Cn=Cn, Cf=Cf, f=fsim, n=nsim
     ax.set_ylabel("power")
     fig.tight_layout()
 end;
-savefig(joinpath(@__DIR__,"plot5.png"));
 ```
 
 ![plot1](plot5.png)
@@ -328,7 +323,7 @@ zwf
 ```
 
 ```
-8.952441970003004
+8.671087340929136
 ```
 
 the "residual" per iteration
@@ -338,7 +333,6 @@ let wfhist=wfhist
     fig, ax = subplots(1, figsize=(8,4))
     semilogy(wfhist)
 end;
-savefig(joinpath(@__DIR__,"plot6.png"));
 ```
 
 ![plot1](plot6.png)
@@ -355,7 +349,7 @@ let Ft=Ft, f=wfsim
     fig.colorbar(pcm, ax = ax)
     fig.tight_layout()
 end;
-savefig(joinpath(@__DIR__,"plot7.png"));
+savefig(joinpath(@__DIR__,"plot7.png")) #src
 ```
 
 ![plot1](plot7.png)

@@ -149,7 +149,7 @@ let Ft=Ft, f=fsim
     fig.tight_layout()
 end;
 #nb gcf() 
-#md savefig(joinpath(@__DIR__,"plot1.png")); 
+savefig(joinpath(@__DIR__,"plot1.png")) #src
 #md # ![plot1](plot1.png)
 
 
@@ -163,7 +163,7 @@ let Ft=Ft, f=nsim
     fig.tight_layout()
 end;
 #nb gcf()
-#md savefig(joinpath(@__DIR__,"plot2.png")); 
+savefig(joinpath(@__DIR__,"plot2.png")) #src
 #md # ![plot1](plot2.png)
 
 
@@ -177,7 +177,7 @@ let Ft=Ft, f=dsim
     fig.tight_layout()
 end;
 #nb gcf() 
-#md savefig(joinpath(@__DIR__,"plot3.png")); 
+savefig(joinpath(@__DIR__,"plot3.png")) #src
 #md # ![plot1](plot3.png)
 
 
@@ -201,7 +201,7 @@ let Ft=Ft, Ma=Ma, Tr=Tr
     fig.tight_layout()
 end;
 #nb gcf() 
-#md savefig(joinpath(@__DIR__,"plot4.png")); 
+savefig(joinpath(@__DIR__,"plot4.png")) #src
 #md # ![plot1](plot4.png)
 
 
@@ -257,7 +257,7 @@ let Ft=Ft, Cn=Cn, Cf=Cf, f=fsim, n=nsim
     fig.tight_layout()
 end;
 #nb gcf()
-#md savefig(joinpath(@__DIR__,"plot5.png")); 
+savefig(joinpath(@__DIR__,"plot5.png")) #src
 #md # ![plot1](plot5.png)
 
 
@@ -336,7 +336,7 @@ let wfhist=wfhist
     semilogy(wfhist)
 end;
 #nb gcf()
-#md savefig(joinpath(@__DIR__,"plot6.png")); 
+savefig(joinpath(@__DIR__,"plot6.png")) #src
 #md # ![plot1](plot6.png)
 
 
@@ -351,6 +351,6 @@ let Ft=Ft, f=wfsim
     fig.tight_layout()
 end;
 #nb gcf()
-#md savefig(joinpath(@__DIR__,"plot7.png")); 
+savefig(joinpath(@__DIR__,"plot7.png")) #src 
 #md # ![plot1](plot7.png)
 
