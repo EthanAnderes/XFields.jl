@@ -7,7 +7,6 @@
 
 using Literate              #src
                             #src
-                            #src
 config = Dict(                      #src
     "documenter"    => false,       #src
     "keep_comments" => true,        #src
@@ -33,6 +32,8 @@ Literate.markdown(          #src
 
 using XFields
 using FFTransforms
+using Spectra
+
 using LinearAlgebra
 using PyPlot
 
@@ -40,8 +41,8 @@ using PyPlot
 # Define the transform
 # ------------------------------------------
 
-Ft = let 
-    𝕨 = r𝕎32(128, π) ⊗ 𝕎(256, 4.0)
+trn = let 
+    𝕨 = r𝕎32(256, π) ⊗ 𝕎(256, 4.0)
     ordinary_scale(𝕨)*𝕨
 end;
 
@@ -49,31 +50,27 @@ end;
 # Signal and noise spectral density
 # --------------------------------------------
 
-# Signal spectral density 
+# Here we use Matern spectral densities 
 
-Cf = let Ft = Ft, ρ = 0.5, ν = 0.1, σ² = 1/2
-    l    = wavenum(Ft)
-    d    = ndims(l) 
-    α    = √(2ν) / ρ
-    cl   = @. hypot(α,l)^(-2ν-d)  
-    clop   = DiagOp(Xfourier(Ft, cl))
-    cv0 = (clop[:] ./ (2π)^(d/2))[1] 
-    ## cv0 ==  auto-cov at lag 0, i.e. the pixel space variance
-    ## Divide by cv0 so the variance is one, then mult by σ²
-
-    clop * (σ² / cv0)
-end;  
+Cf = let trn = trn, ρ = 0.15, ν = 2.1, σ² = 1 / 2
+    l  = wavenum(trn)
+    d  = ndims(l) 
+    cl = σ² .* matern_spec.(l; rho=ρ, nu=ν, d=d)
+    Cf = DiagOp(Xfourier(trn, cl))
+    @show pixel_variance = (Cf[:] ./ (2π)^(d/2))[1] 
+    (σ² / pixel_variance) * Cf 
+end; 
 
 
 # Noise spectral density
 
-Cn =  let Ft=Ft, μKarcminT=15, ℓknee=50, αknee=2
+Cn =  let trn=trn, μKarcminT=15, ℓknee=4*minimum(Δfreq(trn)), αknee=2
 
     Ωx_unit = deg2rad(1/60)^2 ## area [rad²] for 1arcmin×1arcmin pixel
-    wvn     = wavenum(Ft); wvn[1] = Inf
+    wvn     = wavenum(trn); wvn[1] = Inf
     knee    = @. 1 + XFields.nan2zero((ℓknee / wvn) ^ αknee)
     cnl     = μKarcminT^2 .* Ωx_unit .* knee
-    Cn      =  Xfourier(Ft, μKarcminT^2 .* Ωx_unit .* knee) |> DiagOp
+    Cn      =  Xfourier(trn, μKarcminT^2 .* Ωx_unit .* knee) |> DiagOp
 
     Cn
 end;
@@ -84,26 +81,26 @@ end;
 
 # Mask
 
-Ma =  let Ft=Ft, x1bdry = (0.1, 0.9), x2bdry = (0.2,0.95)
+Ma =  let trn=trn, x1bdry = (0.1, 0.9), x2bdry = (0.2,0.95)
 
-    lbr1, rbr1 = Ft.period[1] .* x1bdry
-    lbr2, rbr2 = Ft.period[2] .* x2bdry
-    x1, x2 = pix(Ft)
+    lbr1, rbr1 = trn.period[1] .* x1bdry
+    lbr2, rbr2 = trn.period[2] .* x2bdry
+    x1, x2 = pix(trn)
     ma = (lbr1 .< x1 .< rbr1) .* (lbr2 .< x2 .< rbr2)'
-    Ma = Xmap(Ft, ma) |> DiagOp
+    Ma = Xmap(trn, ma) |> DiagOp
 
     Ma
 end;
 
 # Transfer function
 
-Tr =  let Ft=Ft, beam_npix = 4
+Tr =  let trn=trn, beam_npix = 4
 
-    fwhm_rad = beam_npix * min(Δpix(Ft)...)  
+    fwhm_rad = beam_npix * min(Δpix(trn)...)  
     beam = l -> exp(-abs2(l * fwhm_rad) / (16*log(2)))
-    tr   = beam.(wavenum(Ft))
-    tr .*= wavenum(Ft) .< 0.9nyq(Ft)[1]
-    Tr   = Xfourier(Ft, tr) |> DiagOp
+    tr   = beam.(wavenum(trn))
+    tr .*= wavenum(trn) .< 0.9nyq(trn)[1]
+    Tr   = Xfourier(trn, tr) |> DiagOp
 
     Tr 
 end;
@@ -112,24 +109,24 @@ end;
 # White noise simulator 
 # ------------------------------------
 
-function ωη(Ft::T) where T<:Transform
-    zx = randn(eltype_in(Ft),size_in(Ft)) 
-    Xmap(Ft, zx ./ √Ωx(Ft)) 
+function ωη(trn::T) where T<:Transform
+    zx = randn(eltype_in(trn),size_in(trn)) 
+    Xmap(trn, zx ./ √Ωx(trn)) 
 end
 
 
 # Field simulation: signal (`fsim`), noise (`nsim`) and data (`dsim`)
 # --------------------------------------------------------------
 
-dsim, fsim, nsim = let Ft=Ft, Cf=Cf, Cn=Cn, Cf=Cf, Ma=Ma, Tr=Tr
+dsim, fsim, nsim = let trn=trn, Cf=Cf, Cn=Cn, Cf=Cf, Ma=Ma, Tr=Tr
 
-    fsim = √Cf * ωη(Ft)
-    nsim = √Cn * ωη(Ft)
+    fsim = √Cf * ωη(trn)
+    nsim = √Cn * ωη(trn)
 
     dsim = Ma * Tr * fsim + Ma * nsim
-    μsim = Xmap(Ft,sum(dsim[:]) ./ sum(Ma[:]))
 
-    dsim = dsim - Ma * μsim
+    ## μsim = Xmap(trn,sum(dsim[:]) ./ sum(Ma[:]))
+    ## dsim = dsim - Ma * μsim
 
     dsim, fsim, nsim
 end;
@@ -141,9 +138,9 @@ end;
 # --------------------------------------------------------------
 
 # ## Signal `fsim`
-let Ft=Ft, f=fsim
+let trn=trn, f=fsim
     fig, ax = subplots(1, figsize=(8,4))
-    x1, x2 = pix(Ft)
+    x1, x2 = pix(trn)
     pcm = ax.pcolormesh(x2, x1, f[:])
     ax.set_title("signal")
     fig.colorbar(pcm, ax = ax)
@@ -156,9 +153,9 @@ close() #src
 
 
 # ## Noise `nsim`
-let Ft=Ft, f=nsim
+let trn=trn, f=nsim
     fig, ax = subplots(1, figsize=(8,4))
-    x1, x2 = pix(Ft)
+    x1, x2 = pix(trn)
     pcm = ax.pcolormesh(x2, x1, f[:])
     ax.set_title("noise")
     fig.colorbar(pcm, ax = ax)
@@ -171,9 +168,9 @@ close() #src
 
 
 # ## Data `dsim`
-let Ft=Ft, f=dsim
+let trn=trn, f=dsim
     fig, ax = subplots(1, figsize=(8,4))
-    x1, x2 = pix(Ft)
+    x1, x2 = pix(trn)
     pcm = ax.pcolormesh(x2, x1, f[:])
     ax.set_title("Data")
     fig.colorbar(pcm, ax = ax)
@@ -187,14 +184,14 @@ close() #src
 
 
 # ## Mask and transfer
-let Ft=Ft, Ma=Ma, Tr=Tr
+let trn=trn, Ma=Ma, Tr=Tr
     fig, ax = subplots(2,1, figsize=(8,8))
     
-    x1, x2 = pix(Ft)
+    x1, x2 = pix(trn)
     pcm1 = ax[1].pcolormesh(x2, x1, Ma[:])
     ax[1].set_title("Pixel mask")
 
-    l1, l2 = freq(Ft)
+    l1, l2 = freq(trn)
     p2 = sortperm(l2)
     tr = real.(Tr[!])
     pcm2 = ax[2].pcolormesh(l2[p2], l1, tr[:,p2])
@@ -216,10 +213,10 @@ close() #src
 
 
 function power(f::Xfield{F}, g::Xfield{F}; bin::Int=2, kmax=Inf, mult=1) where F<:Transform
-    Ft     = fieldtransform(f)
-    k      = wavenum(Ft)
+    trn     = fieldtransform(f)
+    k      = wavenum(trn)
     pwr    = @. mult * real(f[!] * conj(g[!]) + conj(f[!]) * g[!]) / 2
-    Δbin   = bin * minimum(Δfreq(Ft))
+    Δbin   = bin * minimum(Δfreq(trn))
     k_left = 0
     while k_left < min(kmax, maximum(k))
         k_right    = k_left + Δbin 
@@ -241,16 +238,16 @@ end
 
 
 # ## Noise and signal bandpowers
-let Ft=Ft, Cn=Cn, Cf=Cf, f=fsim, n=nsim
-    l     = wavenum(Ft)
+let trn=trn, Cn=Cn, Cf=Cf, f=fsim, n=nsim
+    l     = wavenum(trn)
     mult  = l .* (l .+ 1)
 
     fig, ax = subplots(1, figsize=(8,4))
 
-    pwrf = power(f; mult=mult * Ωk(Ft) )
-    pwrn = power(n; mult=mult * Ωk(Ft) )
-    (l[:,1], pwrf[:,1]) |> x->ax.plot(x[1][2:end],x[2][2:end])
-    (l[:,1], pwrn[:,1]) |> x->ax.plot(x[1][2:end],x[2][2:end])
+    pwrf = power(f; mult=mult * Ωk(trn) )
+    pwrn = power(n; mult=mult * Ωk(trn) )
+    (l[:,1], pwrf[:,1]) |> x->ax.plot(x[1][2:end],x[2][2:end], label="signal")
+    (l[:,1], pwrn[:,1]) |> x->ax.plot(x[1][2:end],x[2][2:end], label="noise")
     
     cf = real.(Cf[!])
     cn = real.(Cn[!])
@@ -259,6 +256,7 @@ let Ft=Ft, Cn=Cn, Cf=Cf, f=fsim, n=nsim
 
     ax.set_xlabel("wavenumber")
     ax.set_ylabel("power")
+    ax.legend()
     fig.tight_layout()
 end;
 savefig(joinpath(@__DIR__,"plot5.png")) #src
@@ -300,16 +298,16 @@ end
 
 #-
 function LinearAlgebra.dot(f::Xfield{FT},g::Xfield{FT}) where FT<:Transform 
-    Ft = fieldtransform(f)
-    Ωx(Ft) * dot(f[:],g[:])
+    trn = fieldtransform(f)
+    Ωx(trn) * dot(f[:],g[:])
 end
 
 #-
-wfsim, wfhist, zwf = let Ft=Ft, Cn=Cn, Cf=Cf, Tr=Tr, Ma=Ma, dsim=dsim
+wfsim, wfhist, zwf = let trn=trn, Cn=Cn, Cf=Cf, Tr=Tr, Ma=Ma, dsim=dsim
 
     A  = Ma * Tr / Cn * Tr * Ma
     B  = 1 / Cf
-    P  = Tr / Cn * Tr + B
+    P  = inv(Tr / Cn * Tr + B)
 
     wfsim, wfhist = pcg(
             w -> P * w,
@@ -332,10 +330,6 @@ wfsim, wfhist, zwf = let Ft=Ft, Cn=Cn, Cf=Cf, Tr=Tr, Ma=Ma, dsim=dsim
 end;
 
 
-#-
-zwf
-
-
 # the "residual" per iteration
 let wfhist=wfhist
     fig, ax = subplots(1, figsize=(8,4))
@@ -348,9 +342,9 @@ close() #src
 
 
 # The Wiener filter
-let Ft=Ft, f=wfsim
+let trn=trn, f=wfsim
     fig, ax = subplots(1, figsize=(8,4))
-    x1, x2 = pix(Ft)
+    x1, x2 = pix(trn)
     vm = extrema(f[:]) .|> abs |> x->max(x...)
     pcm = ax.pcolormesh(x2, x1, f[:],vmin=-vm, vmax=vm)
     ax.set_title("Wiener filter")
@@ -362,4 +356,7 @@ close() #src
 #md # ![plot1](plot7.png)
 #nb gcf()
 
-#src For some reason the last src line isn't scrubbed
+
+#- 
+
+
