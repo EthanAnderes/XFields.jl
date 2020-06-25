@@ -4,8 +4,9 @@ using LinearAlgebra
 
 const module_dir  = joinpath(@__DIR__, "..") |> normpath
 
-# Abstract Transform
+# Abstract Transform and identity transform
 # ==========================================
+export Transform, size_in, size_out, eltype_in, eltype_out, plan
 
 abstract type Transform{Tf<:Number,d} end
 
@@ -15,10 +16,23 @@ eltype_in(ft::Transform) = error("not yet defined")
 eltype_out(ft::Transform) = error("not yet defined")
 plan(ft::Transform) = error("not yet defined")
 
-export Transform, size_in, size_out, eltype_in, eltype_out, plan
+# Identity transform when one just wants to work with an array
+struct Id{Tf,d} <: Transform{Tf,d}
+	sz::NTuple{d,Int} 
+end
+size_in(trn::Id) = trn.sz
+size_out(trn::Id) = trn.sz
+eltype_in(trn::Id{Tf}) where {Tf} = Tf
+eltype_out(trn::Id{Tf}) where {Tf} = Tf
+plan(trn::Id) = trn
+Base.:*(trn::Id{Tf,d}, f::Array{Tf,d}) where {Tf,d} = f
+Base.:\(trn::Id{Tf,d}, f::Array{Tf,d}) where {Tf,d} = f
 
 # Abstract Field with Fourier <-> Map pair
 # ==========================================
+export	Field, FourierField, MapField, fielddata, fieldtransform,
+		DiagOp, AbstractLinearOp, diag 
+#TODO: add adjoint method for DiagOp
 
 abstract type Field{F<:Transform,Tf,Ti,d} end
 abstract type FourierField{F<:Transform,Tf,Ti,d} <: Field{F,Tf,Ti,d} end
@@ -38,15 +52,11 @@ include("field_methods.jl")
 
 include("linear_ops.jl")
 
-export Field, FourierField, MapField, fielddata, fieldtransform
-export DiagOp, AbstractLinearOp, diag 
-#TODO: add adjoint method for DiagOp
-
-# Specific implimentation 
+# Specific implimentation of Abstract Field 
 # =========================================
+export Xmap, Xfourier, Xfield 
 
 include("xfield.jl")
 
-export Xmap, Xfourier, Xfield 
 
 end
