@@ -45,7 +45,7 @@ end;
 Cf = let trn = trn, ρ = 0.15, ν = 2.1, σ² = 1 / 2
     l  = wavenum(trn)
     d  = ndims(l) 
-    cl = σ² .* matern_spec.(l; rho=ρ, nu=ν, d=d)
+    cl = σ² .* Spectra.matern_spec.(l; rho=ρ, nu=ν, d=d)
     Cf = DiagOp(Xfourier(trn, cl))
     @show pixel_variance = (Cf[:] ./ (2π)^(d/2))[1] 
     (σ² / pixel_variance) * Cf 
