@@ -58,5 +58,11 @@ Xfourier(f::Xfield{F,Tf,Ti,d}) where {Tf,Ti,d, F<:Transform{Tf,d}} = FourierFiel
 # zero and constant constructors
 Xmap(ft::F)                 where {Tf,d,F<:Transform{Tf,d}} = Xmap(ft, zeros(Tf, size_in(ft)))
 Xmap(ft::F, n::Number)      where {Tf,d,F<:Transform{Tf,d}} = Xmap(ft, fill(Tf(n), size_in(ft)))
-Xfourier(ft::F)             where {Tf,d,F<:Transform{Tf,d}} = Xfourier(ft, zeros(Tf, size_in(ft)))
-Xfourier(ft::F, n::Number)  where {Tf,d,F<:Transform{Tf,d}} = Xfourier(ft, fill(Tf(n), size_in(ft)))
+function Xfourier(ft::F) where {Tf,d,F<:Transform{Tf,d}}
+    Ti = eltype_out(ft) 
+    Xfourier(ft, zeros(Ti, size_out(ft)))
+end
+function Xfourier(ft::F, n::Number) where {Tf,d,F<:Transform{Tf,d}} 
+    Ti = eltype_out(ft) 
+    Xfourier(ft, fill(Ti(n), size_out(ft)))
+end
