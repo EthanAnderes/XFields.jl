@@ -15,6 +15,81 @@ julia> using Pkg
 julia> pkg"add https://github.com/EthanAnderes/XFields.jl"
 ```
 
+# Method/type list
+
+## Generic Transform
+
+```julia
+Transform{Ti<:Number,d}    # abstract type
+
+# for tm::Transform{Ti,d}
+
+szi = size_in(tm) 
+szo = size_out(tm) 
+Ti  = eltype_in(tm) 
+To  = eltype_out(tm) 
+pft = plan(tm)
+pft * Array{Ti}(undef, szi)
+pft \ Array{To}(undef, szo)
+```
+
+## Generic Field
+
+
+```julia 
+Field{Tm<:Transform, Ti<:Number, To<:Number, d}   # abstract type
+FourierField{Tm, Ti, To ,d} <: Field              # abstract type
+MapField{Tm, Ti, To ,d}     <: Field              # abstract type
+```
+
+FourierField and MapField are used for mapping concrete types to duals. Used when defining a new concrete Field type.
+
+```julia
+FourierField(::Type{X}) # -> concrete field type X to dual type
+MapField(::Type{X})     # -> concrete field type X to dual type
+```
+
+```julia
+# for f::Field 
+
+FourierField(f)   -> f′::FourierField, convert to dual field
+MapField(f)       -> f′::MapField,     convert to dual field
+
+fieldtransform(f) -> tm::Transform
+fielddata(f)      -> storage_data::Array
+
+f[!]              -> fielddata(FourierField(f))
+f[:]              -> fielddata(MapField(f))
+
+tm * f            -> FourierField(f)
+tm \ f            -> MapField(f)
+```
+
+```julia
+AbstractLinearOp                      # abstract
+DiagOp{X<:Field} <: AbstractLinearOp  # concrete
+
+# base methods
+
+diag(O::DiagOp)
+inv(O::AbstractLinearOp) 
+adjoint(O::AbstractLinearOp) 
+*(O::AbstractLinearOp, f::Field) 
+\(O::AbstractLinearOp, f::Field)
+```
+
+## Pre-defined concrete field 
+
+For `Tm<:Transform`, `Ti<:Number` map array eltype (`Ti` for *T*ransform *i*nput  argument), `To<:Number` fourier array eltype (`To` for *T*ransform *o*utput). 
+
+```julia
+Xfield{Tm, Ti, To ,d}   <: Field  # abstract type
+Xmap{Tm, Ti, To ,d}     <: Xfield # concrete map field type  
+Xfourier{Tm, Ti, To ,d} <: Xfield # concrete fourier field type   
+```
+
+
+
 # Quickstart: Pixel field with fourier operator 
 
 Here is a quick example of a one dimensional field period on the interval [0, 1). We will construct two operators A, B where A represents the derivative operator, diagonal in Fourier space, and B represents a pixel masking operator, diagonal in pixel space.

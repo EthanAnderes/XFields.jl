@@ -110,7 +110,7 @@ struct DiagOp{X<:Field} <: AbstractLinearOp
     f::X
 end
 
-# Interfact methods
+# Interface methods
 # ---------------------------------------
 
 function Base.:inv(O::DiagOp{X}) where X<:Field 
