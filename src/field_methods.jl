@@ -6,10 +6,10 @@ Base.getindex(f::Field, ::typeof(!)) = fielddata(FourierField(f))
 Base.getindex(f::Field, ::Colon)     = fielddata(MapField(f))
 
 # f[()] takes a storage array and unpackes it as a tuple. 
-# By default we simply take the map data array and wrap it in a tuple.
-# It is intended that this will get intercepted to unpack the map data into 
-# a tuple form that can be passed to lensing algorithms etc...
-Base.getindex(f::Field, ::Tuple{})   = (fielddata(MapField(f)),)
+# Base.getindex(f::Field, ::Tuple{})   = (fielddata(MapField(f)),)
+# We will reserve this for custom usage ...
+# it was intended for processing the data from a field to be lensed but
+# instead I decided to use f[L::AbstractFlow] for this
 
 
 # convert to the corresponding dual field using the transform itself
