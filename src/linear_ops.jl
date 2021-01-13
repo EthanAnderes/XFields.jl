@@ -184,33 +184,3 @@ Base.:*(O1::DiagOp{X}, O2::DiagOp{X}) where X<:Field = DiagOp(O1.f * O2.f)
 Base.:\(O1::DiagOp{X}, O2::DiagOp{X}) where X<:Field = DiagOp(O1.f \ O2.f)
 Base.:/(O1::DiagOp{X}, O2::DiagOp{X}) where X<:Field = DiagOp(O1.f / O2.f)
 
-
-
-## # Operations op(DiagOp, DiagOp
-## # ------------------------------------------
-## 
-## # chains of linear ops that are not of the same type store a lazy tuple
-## Base.:*(O1::DiagOp, O2::DiagOp) = tuple(O1, O2)
-## Base.:*(O1::NTuple{N,DiagOp}, O2::DiagOp) where N = Base.front(O1) * (Base.last(O1) * O2)
-## Base.:*(O1::DiagOp, O2::NTuple{N,DiagOp}) where N = (O1 * Base.first(O2)) * Base.tail(O2)
-## Base.:*(O1::NTuple{N,DiagOp}, O2::NTuple{M,DiagOp}) where {N,M} = tuple(O1..., O2...)
-## 
-## Base.:inv(O1::NTuple{N,DiagOp}) where N = tuple((inv(op) for op in reverse(O1))...)
-## 
-## Base.:\(O1::DiagOp, O2::DiagOp)                   = inv(O1) * O2
-## Base.:\(O1::NTuple{N,DiagOp}, O2::DiagOp) where N = inv(O1) * O2
-## Base.:\(O1::DiagOp, O2::NTuple{N,DiagOp}) where N = inv(O1) * O2
-## Base.:\(O1::NTuple{N,DiagOp}, O2::NTuple{M,DiagOp}) where {N,M} = inv(O1) * O2
-## 
-## Base.:/(O1::DiagOp, O2::DiagOp)                   = O1 * inv(O2) 
-## Base.:/(O1::NTuple{N,DiagOp}, O2::DiagOp) where N = O1 * inv(O2)
-## Base.:/(O1::DiagOp, O2::NTuple{N,DiagOp}) where N = O1 * inv(O2)
-## Base.:/(O1::NTuple{N,DiagOp}, O2::NTuple{M,DiagOp}) where {N,M} = O1 * inv(O2)
-## 
-## # activate the lazy tuple when operating
-## Base.:*(O1::NTuple{N,DiagOp}, f::Y) where {N,Y<:Field} = Y(foldr(_lmult, (O1..., f)))
-## Base.:\(O1::NTuple{N,DiagOp}, f::Y) where {N,Y<:Field} = (inv(O1) * f)::Y 
-## 
-
-
-

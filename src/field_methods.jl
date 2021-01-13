@@ -1,9 +1,16 @@
 # getindex for :, ! and *, / with the transform 
 # ============================================================
 
-#  getindex
+#  f[!] -> fourier data storage array, f[:] -> map storage array
 Base.getindex(f::Field, ::typeof(!)) = fielddata(FourierField(f))
 Base.getindex(f::Field, ::Colon)     = fielddata(MapField(f))
+
+# f[()] takes a storage array and unpackes it as a tuple. 
+# By default we simply take the map data array and wrap it in a tuple.
+# It is intended that this will get intercepted to unpack the map data into 
+# a tuple form that can be passed to lensing algorithms etc...
+Base.getindex(f::Field, ::Tuple{})   = (fielddata(MapField(f)),)
+
 
 # convert to the corresponding dual field using the transform itself
 Base.:*(ft::F, f::Field{F,Tf,Ti,d})  where {Tf,Ti,d, F<:Transform{Tf,d}} = FourierField(f)
