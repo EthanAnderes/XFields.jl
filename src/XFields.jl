@@ -31,8 +31,7 @@ Base.:\(trn::Id{Tf,d}, f::Array{Tf,d}) where {Tf,d} = f
 # Abstract Field with Fourier <-> Map pair
 # ==========================================
 export	Field, FourierField, MapField, fielddata, fieldtransform,
-		DiagOp, AbstractLinearOp, diag 
-#TODO: add adjoint method for DiagOp
+		AbstractLinearOp, DiagOp, diag 
 
 abstract type Field{F<:Transform,Tf,Ti,d} end
 abstract type FourierField{F<:Transform,Tf,Ti,d} <: Field{F,Tf,Ti,d} end
@@ -50,7 +49,9 @@ include("convert_promote.jl")
 
 include("field_methods.jl")
 
-include("linear_ops.jl")
+include("abstract_linear_ops.jl")
+
+include("diag_linear_op.jl")
 
 # Specific implimentation of Abstract Field 
 # =========================================
