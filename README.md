@@ -276,9 +276,9 @@ function Base.getindex(f::Xfield, sym::Symbol)
     error("index is not defined")
 end
 
-LinearAlgebra.dot(f::Xfield{F}, g::Xfield{F}) where F = dot(f[:], g[:]) .* Ωx(F)
+LinearAlgebra.dot(f::Xfield{F}, g::Xfield{F}) where F = dot(f[:], g[:]) .* Ωpix(F)
 ```
-where `Ωx(F)` is a method defined for types `F<:𝔽{Tf,d,opt}`
+where `Ωpix(F)` is a method defined for types `F<:𝔽{Tf,d,opt}`
 
 
 

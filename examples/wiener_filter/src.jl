@@ -11,7 +11,7 @@ using PyPlot
 # ------------------------------------------
 
 trn = let 
-    𝕨 = r𝕎32(256, π) ⊗ 𝕎(256, 4.0)
+    𝕨 = 𝕎(Float32, 256, π) ⊗ 𝕎(256, 4.0)
     ordinary_scale(𝕨)*𝕨
 end;
 
@@ -80,7 +80,7 @@ end;
 
 function ωη(trn::T) where T<:Transform
     zx = randn(eltype_in(trn),size_in(trn)) 
-    Xmap(trn, zx ./ √Ωx(trn)) 
+    Xmap(trn, zx ./ √Ωpix(trn)) 
 end
 
 
@@ -195,8 +195,8 @@ let trn=trn, Cn=Cn, Cf=Cf, f=fsim, n=nsim
 
     fig, ax = subplots(1, figsize=(8,4))
 
-    pwrf = power(f; mult=mult * Ωk(trn) )
-    pwrn = power(n; mult=mult * Ωk(trn) )
+    pwrf = power(f; mult=mult * Ωfreq(trn) )
+    pwrn = power(n; mult=mult * Ωfreq(trn) )
     (l[:,1], pwrf[:,1]) |> x->ax.plot(x[1][2:end],x[2][2:end], label="signal")
     (l[:,1], pwrn[:,1]) |> x->ax.plot(x[1][2:end],x[2][2:end], label="noise")
     
@@ -246,7 +246,7 @@ end
 
 function LinearAlgebra.dot(f::Xfield{FT},g::Xfield{FT}) where FT<:Transform 
     trn = fieldtransform(f)
-    Ωx(trn) * dot(f[:],g[:])
+    Ωpix(trn) * dot(f[:],g[:])
 end
 
 #-
