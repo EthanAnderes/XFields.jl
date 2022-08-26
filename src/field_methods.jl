@@ -13,8 +13,8 @@ Base.getindex(f::Field, ::Colon)     = fielddata(MapField(f))
 
 
 # convert to the corresponding dual field using the transform itself
-Base.:*(ft::F, f::Field{F,Tf,Ti,d})  where {Tf,Ti,d, F<:Transform{Tf,d}} = FourierField(f)
-Base.:\(ft::F, f::Field{F,Tf,Ti,d})  where {Tf,Ti,d, F<:Transform{Tf,d}} = MapField(f)
+Base.:*(ft::F, f::Field{F,Tf,Ti,d})  where {F,Tf,Ti,d} = FourierField(f)
+Base.:\(ft::F, f::Field{F,Tf,Ti,d})  where {F,Tf,Ti,d} = MapField(f)
 
 
 # field operations

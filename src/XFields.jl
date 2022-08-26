@@ -8,7 +8,7 @@ const module_dir  = joinpath(@__DIR__, "..") |> normpath
 # ==========================================
 export Transform, size_in, size_out, eltype_in, eltype_out, plan
 
-abstract type Transform{Tf<:Number,d} end
+abstract type Transform end
 
 size_in(ft::Transform) = error("not yet defined")
 size_out(ft::Transform) = error("not yet defined")
@@ -17,7 +17,7 @@ eltype_out(ft::Transform) = error("not yet defined")
 plan(ft::Transform) = error("not yet defined")
 
 # Identity transform when one just wants to work with an array
-struct Id{Tf,d} <: Transform{Tf,d}
+struct Id{Tf,d} <: Transform
 	sz::NTuple{d,Int} 
 end
 size_in(trn::Id) = trn.sz

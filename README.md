@@ -15,23 +15,28 @@ julia> using Pkg
 julia> pkg"add https://github.com/EthanAnderes/XFields.jl"
 ```
 
-# Method/type list
 
-## Generic Transform
+## Pre-defined concrete fields Xmap and Xfourier 
+
 
 ```julia
-Transform{Ti<:Number,d}    # abstract type
+Xmap{Tm, Ti, To ,d}     <: Xfield # concrete map field type  
+Xfourier{Tm, Ti, To ,d} <: Xfield # concrete fourier field type   
+```
+`Tm` is a Transform type which holds enough information to transform a Xmap array to a Xfourier array and back.
 
-# for tm::Transform{Ti,d}
+`Ti` is the map pixel eltype; `To` is the fourier pixel eltype. 
+`d` is the dimension of both. These types must match the following required methods for the transform `tm<:Transform`
 
+```julia
 szi = size_in(tm) 
 szo = size_out(tm) 
 Ti  = eltype_in(tm) 
 To  = eltype_out(tm) 
 pft = plan(tm)
-pft * Array{Ti}(undef, szi)
-pft \ Array{To}(undef, szo)
+
 ```
+
 
 ## Generic Field
 
@@ -76,16 +81,6 @@ inv(O::AbstractLinearOp)
 adjoint(O::AbstractLinearOp) 
 *(O::AbstractLinearOp, f::Field) 
 \(O::AbstractLinearOp, f::Field)
-```
-
-## Pre-defined concrete field 
-
-For `Tm<:Transform`, `Ti<:Number` map array eltype (`Ti` for *T*ransform *i*nput  argument), `To<:Number` fourier array eltype (`To` for *T*ransform *o*utput). 
-
-```julia
-Xfield{Tm, Ti, To ,d}   <: Field  # abstract type
-Xmap{Tm, Ti, To ,d}     <: Xfield # concrete map field type  
-Xfourier{Tm, Ti, To ,d} <: Xfield # concrete fourier field type   
 ```
 
 
