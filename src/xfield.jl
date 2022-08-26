@@ -8,9 +8,15 @@ struct Xmap{F<:Transform, Tf<:Number, Ti<:Number, d} <: MapField{F,Tf,Ti,d}
         @assert Tf == eltype_in(ft)
         @assert Ti == eltype_out(ft)
         @assert size(fd) == size_in(ft)
-        new{F,Tf,Ti,d}(ft, Tf.(fd))
+        new{F,Tf,Ti,d}(ft, Tf.(fd)) 
     end
+    # Note: it is important that the constructor Xmap{F,Tf,Ti,d}
+    # check that the type parameters Tf, Ti, d match the 
+    # input, output, dimension of the array storage that 
+    # the transform ft::F expects. This is the only place that this 
+    # check happens.
 end
+
 
 # Xfourier
 # =================================
@@ -24,6 +30,11 @@ struct Xfourier{F<:Transform, Tf<:Number, Ti<:Number, d}  <: FourierField{F,Tf,T
         @assert size(fd) == size_out(ft)
         new{F,Tf,Ti,d}(ft, Ti.(fd))
     end
+    # Note: it is important that the constructor Xfield{F,Tf,Ti,d}
+    # check that the type parameters Tf, Ti, d match the 
+    # input, output, dimension of the array storage that 
+    # the transform ft::F expects. This is the only place that this 
+    # check happens.
 end
 
 # Interface definitions required to hook into Field definitions
